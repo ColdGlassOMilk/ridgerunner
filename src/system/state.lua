@@ -19,17 +19,31 @@ function state:switch(name, ...)
     local s = self.states[self.current]
     if s.exit then s:exit(self.data, ...) end
   end
-  
+
   self.prev = self.current
   self.current = name
-  
+
   local s = self.states[name]
+
+  -- handle input context switching
+  if s.bindings then
+    if self.prev then
+      -- switching from another state, pop old context
+      input:pop()
+    end
+    input:push()
+    input:bind(s.bindings)
+  elseif self.prev and self.states[self.prev].bindings then
+    -- new state has no bindings, but old state did
+    input:pop()
+  end
+
   if s.init then s:init(self.data, ...) end
-  
+
   if message_bus then
     message_bus:emit("state_changed", {
-      mgr=self, 
-      from=self.prev, 
+      mgr=self,
+      from=self.prev,
       to=name
     })
   end

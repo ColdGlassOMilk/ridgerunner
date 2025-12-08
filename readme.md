@@ -4,19 +4,19 @@ A minimal yet powerful boilerplate for Pico-8 projects, providing essential syst
 
 ## Core Systems
 
-- **Input Management**
-Map buttons to custom actions with context-aware handling. Input contexts automatically stack when menus open, or scenes are pushed, allowing proper input isolation.
+### Input Management
+Map buttons to custom actions with context-aware handling. Input contexts automatically stack when menus open, allowing proper input isolation.
 
-- **Scene Management**
+### Scene Management
 Switch between major game sections (title screen, gameplay, game over) with automatic cleanup and initialization.
 
-- **State Management**
+### State Management
 Handle sub-states within scenes (player states, enemy AI states, game phases) with a lightweight finite state machine.
 
-- **Message Bus**
+### Message Bus
 Emit and subscribe to events across your game for decoupled communication between systems.
 
-- **Menu System**
+### Menu System
 Create nested menus with dynamic labels, conditional enabling/disabling, and custom actions.
 
 ## Quick Start
@@ -71,7 +71,7 @@ end
 
 ### Using State Management Within Scenes
 
-The state manager handles sub-states within a scene, like player states or game phases:
+The state manager is perfect for handling sub-states within a scene, like player states or game phases. States can include a `bindings` table that automatically manages input contexts when transitioning between states:
 
 ```lua
 player_scene = {
@@ -79,7 +79,7 @@ player_scene = {
 }
 
 function player_scene:init()
-  -- define player states
+  -- define player states with automatic input handling
   local player_states = {
     idle = {
       init = function(data)
@@ -87,13 +87,23 @@ function player_scene:init()
         data.vx = 0
       end,
 
-      update = function(data)
-        if btn(input.button.left) or btn(input.button.right) then
+      -- bindings automatically bound when entering this state
+      bindings = {
+        [input.button.left] = function()
+          self.player_fsm.data.direction = -1
           self.player_fsm:switch('walking')
-        end
-        if btnp(input.button.x) then
+        end,
+        [input.button.right] = function()
+          self.player_fsm.data.direction = 1
+          self.player_fsm:switch('walking')
+        end,
+        [input.button.x] = function()
           self.player_fsm:switch('jumping')
         end
+      },
+
+      update = function(data)
+        -- idle state logic (could check for fall, etc)
       end,
 
       draw = function(data)
@@ -104,26 +114,39 @@ function player_scene:init()
     walking = {
       init = function(data)
         data.anim = "walk"
+        data.vx = data.direction * 2
+        data.walking = true
       end,
 
-      update = function(data)
-        data.vx = 0
-        if btn(input.button.left) then
-          data.vx = -2
+      bindings = {
+        [input.button.left] = function()
+          self.player_fsm.data.direction = -1
+          self.player_fsm.data.vx = -2
+          self.player_fsm.data.walking = true
+        end,
+        [input.button.right] = function()
+          self.player_fsm.data.direction = 1
+          self.player_fsm.data.vx = 2
+          self.player_fsm.data.walking = true
+        end,
+        [input.button.x] = function()
+          self.player_fsm:switch('jumping')
         end
-        if btn(input.button.right) then
-          data.vx = 2
-        end
+      },
 
-        if data.vx == 0 then
+      update = function(data)
+        -- if no input this frame, stop walking
+        if data.walking then
+          data.x += data.vx
+          data.walking = false  -- will be set true again by input if button held
+        else
+          data.vx = 0
           self.player_fsm:switch('idle')
         end
-
-        data.x += data.vx
       end,
 
       draw = function(data)
-        spr(2, data.x, data.y)
+        spr(2, data.x, data.y, 1, 1, data.direction == -1)
       end
     },
 
@@ -131,6 +154,8 @@ function player_scene:init()
       init = function(data)
         data.vy = -4
       end,
+
+      -- jumping has no bindings - player can't control in air
 
       update = function(data)
         data.vy += 0.3
@@ -154,6 +179,8 @@ function player_scene:init()
   -- initialize player data
   self.player_fsm.data.x = 64
   self.player_fsm.data.y = 64
+  self.player_fsm.data.vx = 0
+  self.player_fsm.data.direction = 1
 end
 
 function player_scene:update()
@@ -166,6 +193,13 @@ function player_scene:draw()
 end
 
 function player_scene:exit()
+  -- cleanup input contexts
+  if self.player_fsm and self.player_fsm.current then
+    local current_state = self.player_fsm.states[self.player_fsm.current]
+    if current_state.bindings then
+      input:pop()
+    end
+  end
   self.player_fsm = nil
 end
 ```
@@ -184,8 +218,15 @@ function battle_scene:init()
         data.menu:show()
       end,
 
+      -- menu handles its own input, so no input table needed here
+
       update = function(data)
         data.menu:update()
+      end,
+
+      draw = function(data)
+        print("your turn", 40, 10, 7)
+        data.menu:draw()
       end
     },
 
@@ -194,6 +235,8 @@ function battle_scene:init()
         data.timer = 60
       end,
 
+      -- player has no control during enemy turn
+
       update = function(data)
         data.timer -= 1
         if data.timer <= 0 then
@@ -201,6 +244,10 @@ function battle_scene:init()
           data.player_hp -= 10
           self.phase_fsm:switch('player_turn')
         end
+      end,
+
+      draw = function(data)
+        print("enemy turn", 40, 10, 8)
       end
     }
   }
@@ -221,7 +268,16 @@ function battle_scene:update()
 end
 
 function battle_scene:draw()
+  cls()
   self.phase_fsm:draw()
+  print("hp: "..self.phase_fsm.data.player_hp, 10, 120, 7)
+end
+
+function battle_scene:exit()
+  if self.phase_fsm.data.menu.active then
+    self.phase_fsm.data.menu:hide()
+  end
+  self.phase_fsm = nil
 end
 ```
 
@@ -409,8 +465,9 @@ src/
 ### State Manager
 
 - `state:new(states, initial)` - create new state machine
-- `state:switch(name, ...)` - transition to new state
+- `state:switch(name, ...)` - transition to new state (automatically handles input contexts)
 - `state.data` - shared data table accessible in all states
+- **State definition**: Each state can include an optional `bindings` table that will be automatically bound when entering that state and cleaned up when leaving
 
 ### Input Manager
 
