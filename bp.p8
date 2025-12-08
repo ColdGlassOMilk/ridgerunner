@@ -9,6 +9,7 @@ __lua__
 #include src/system/menu.lua
 #include src/system/message_bus.lua
 #include src/system/scene.lua
+#include src/system/slot.lua
 #include src/system/state.lua
 
 -- scenes
