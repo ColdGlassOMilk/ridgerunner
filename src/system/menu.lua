@@ -12,8 +12,8 @@ end
 function menu:new(items, x, y, opts)
   opts = opts or {}
   local m = {
-    x = x or 0,
-    y = y or 0,
+    x = x,
+    y = y,
     items = items or {},
     active = false,
     sel = 1,
@@ -29,12 +29,36 @@ function menu:new(items, x, y, opts)
   return m
 end
 
+-- Calculate menu dimensions
+function menu:get_dimensions()
+  local padding = 3
+  local spacing = 2
+  local font_h = 6
+
+  -- calculate menu width
+  local w = 0
+  for item in all(self.items) do
+    w = max(w, print(self:get_label(item), 0, -100))
+  end
+  local menu_w = w + padding*2
+  local menu_h = padding*2 + font_h*#self.items + spacing*(#self.items-1)
+
+  return menu_w, menu_h
+end
+
 -- Show menu
 function menu:show(parent)
   self.sel = 1
   self.active = true
   self.parent = parent
-  sfx(0, 0)
+  sfx(0, 3)
+
+  -- if no position specified, center the menu
+  if not self.x or not self.y then
+    local menu_w, menu_h = self:get_dimensions()
+    self.x = self.x or (64 - menu_w / 2)
+    self.y = self.y or (64 - menu_h / 2)
+  end
 
   -- push new input context
   input:push()
@@ -64,7 +88,7 @@ end
 -- Hide menu
 function menu:hide()
   self.active = false
-  sfx(1, 0)
+  sfx(1, 3)
 
   -- restore previous input context
   input:pop()
@@ -89,7 +113,7 @@ end
 -- Navigate menu
 function menu:navigate(dir)
   self.sel = wrap(self.sel + dir, #self.items)
-  sfx(2, 0)
+  sfx(2, 3)
 end
 
 -- Select item
@@ -114,7 +138,7 @@ function menu:select()
       self:hide()
       self:close_parents()
     else
-      sfx(0, 0)
+      sfx(0, 3)
     end
   end
 end
@@ -145,13 +169,8 @@ function menu:draw()
   local spacing = 2
   local font_h = 6
 
-  -- calculate menu width
-  local w = 0
-  for item in all(self.items) do
-    w = max(w, print(self:get_label(item), 0, -100))
-  end
-  local menu_w = w + padding*2
-  local menu_h = padding*2 + font_h*#self.items + spacing*(#self.items-1)
+  -- get menu dimensions
+  local menu_w, menu_h = self:get_dimensions()
 
   -- clamp position to screen bounds (128x128)
   local draw_x = mid(0, self.x, 128 - menu_w - 2)

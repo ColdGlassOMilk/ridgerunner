@@ -29,20 +29,14 @@ function game_scene:load(slot_num)
 end
 
 function game_scene:init()
-  self.data.bgcol = 1
+  self.data.bgcol = 5
   local m = self
-  slot:init("pico8_bp", {"bgcol"})
   game_menu = menu:new({
     {label="new game", action=function() scene:switch("game") end},
     {label="save", sub_menu=menu:new({
       {label="slot 1", action=function() return game_scene:save(1) end},
       {label="slot 2", action=function() return game_scene:save(2) end},
       {label="slot 3", action=function() return game_scene:save(3) end}
-    })},
-    {label="load", sub_menu=menu:new({
-      {label="slot 1", action=function() return game_scene:load(1) end, enabled=function() return slot:exists(1) end},
-      {label="slot 2", action=function() return game_scene:load(2) end, enabled=function() return slot:exists(2) end},
-      {label="slot 3", action=function() return game_scene:load(3) end, enabled=function() return slot:exists(3) end}
     })},
     {label="bg color", sub_menu=menu:new({
       {label="black", action=function() m.data.bgcol = 0 end},
@@ -55,7 +49,7 @@ function game_scene:init()
       {label="brown", action=function() m.data.bgcol = 4 end}
     }
   )},
-  {label="close", action=function() return true end}
+  {label="exit", action=function() scene:switch('title') end}
   }, 2, 2)
 
   input:bind({
