@@ -40,9 +40,9 @@ function game_scene:init()
       {label="slot 3", action=function() return game_scene:save(3) end}
     })},
     {label="load", sub_menu=menu:new({
-      {label="slot 1", action=function() return game_scene:load(1) end},
-      {label="slot 2", action=function() return game_scene:load(2) end},
-      {label="slot 3", action=function() return game_scene:load(3) end}
+      {label="slot 1", action=function() return game_scene:load(1) end, enabled=function() return slot:exists(1) end},
+      {label="slot 2", action=function() return game_scene:load(2) end, enabled=function() return slot:exists(2) end},
+      {label="slot 3", action=function() return game_scene:load(3) end, enabled=function() return slot:exists(3) end}
     })},
     {label="bg color", sub_menu=menu:new({
       {label="black", action=function() m.data.bgcol = 0 end},
