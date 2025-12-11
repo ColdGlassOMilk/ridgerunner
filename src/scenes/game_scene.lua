@@ -9,7 +9,7 @@ end
 function game_scene:save(slot_num)
   slot:save(slot_num, {
     bgcol = self.data.bgcol,
-    timer = self.timer
+    timer = self.data.timer
   })
   return true
 end
@@ -19,13 +19,12 @@ function game_scene:load(slot_num)
   if data then
     scene:switch('game')
     self.data.bgcol = data.bgcol
-    self.timer = data.timer or 0
+    self.data.timer = data.timer or 0
   end
 end
 
 function game_scene:init()
   self.data = app:copy_defaults()
-  self.timer = self.data.timer or 0
 
   local m = self
   self.game_menu = menu:new({
@@ -66,7 +65,7 @@ function game_scene:init()
 end
 
 function game_scene:update()
-  self.timer += 1
+  self.data.timer += 1
 
   if self.game_menu.active then
     self.game_menu:update()
@@ -76,7 +75,7 @@ end
 function game_scene:draw()
   cls(self.data.bgcol)
 
-  print("timer: " .. self.timer, 2, 120, 7)
+  print("timer: " .. self.data.timer, 2, 120, 7)
   print("❎ menu  🅾️ pause", 2, 2, 6)
 
   if self.game_menu.active then
