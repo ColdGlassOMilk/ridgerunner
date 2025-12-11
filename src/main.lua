@@ -1,17 +1,20 @@
 -- main
 
 function _init()
-  -- slot:init("pico8_bp", {"bgcol"})
   app:init({
-    name = "pico8_bp",
-    title = "Pico-8 Boilerplate",
+    name = "pico8_bp_v1",
+    title = "Boilerplate v1",
     defaults = {
-      bgcol = 1
+      bgcol = 1,
+      timer = 0
     }
   })
 
+  -- register all scenes
   scene:register('title', title_scene)
   scene:register('game', game_scene)
+  scene:register('pause', pause_scene)
+
   scene:switch('title')
 end
 

@@ -5,7 +5,7 @@ menu.__index = menu
 
 -- helper
 function wrap(i, n)
-  return ((i-1) % n) + 1
+  return ((i - 1) % n) + 1
 end
 
 -- Constructor
@@ -35,13 +35,12 @@ function menu:get_dimensions()
   local spacing = 2
   local font_h = 6
 
-  -- calculate menu width
   local w = 0
   for item in all(self.items) do
     w = max(w, print(self:get_label(item), 0, -100))
   end
-  local menu_w = w + padding*2
-  local menu_h = padding*2 + font_h*#self.items + spacing*(#self.items-1)
+  local menu_w = w + padding * 2
+  local menu_h = padding * 2 + font_h * #self.items + spacing * (#self.items - 1)
 
   return menu_w, menu_h
 end
@@ -53,33 +52,28 @@ function menu:show(parent)
   self.parent = parent
   if self.closeable then sfx(0, 3) end
 
-  -- if no position specified, center the menu
+  -- center if no position specified
   if not self.x or not self.y then
     local menu_w, menu_h = self:get_dimensions()
     self.x = self.x or (64 - menu_w / 2)
     self.y = self.y or (64 - menu_h / 2)
   end
 
-  -- push new input context
+  -- push input context and bind menu controls
   input:push()
+  self:_bind_input()
+end
 
+-- internal: bind menu navigation
+function menu:_bind_input()
   local bindings = {
-    [input.button.up] = function()
-      self:navigate(-1)
-    end,
-    [input.button.down] = function()
-      self:navigate(1)
-    end,
-    [input.button.x] = function()
-      self:select()
-    end
+    [input.button.up] = function() self:navigate(-1) end,
+    [input.button.down] = function() self:navigate(1) end,
+    [input.button.x] = function() self:select() end
   }
 
-  -- only bind close if menu is closeable
   if self.closeable then
-    bindings[input.button.o] = function()
-      self:hide()
-    end
+    bindings[input.button.o] = function() self:hide() end
   end
 
   input:bind(bindings)
@@ -87,10 +81,9 @@ end
 
 -- Hide menu
 function menu:hide()
+  if not self.active then return end
   self.active = false
   sfx(1, 3)
-
-  -- restore previous input context
   input:pop()
 end
 
@@ -120,7 +113,6 @@ end
 function menu:select()
   local selected_item = self.items[self.sel]
 
-  -- can't select disabled items
   if not self:is_enabled(selected_item) then
     return
   end
@@ -143,15 +135,15 @@ function menu:select()
   end
 end
 
--- Close parents
+-- Close parent menus recursively
 function menu:close_parents()
-  if self.parent then
+  if self.parent and self.parent.active then
     self.parent:hide()
     self.parent:close_parents()
   end
 end
 
--- Update function (now just delegates to sub-menu if active)
+-- Update (delegates to active sub-menu)
 function menu:update()
   if not self.active then return end
 
@@ -169,50 +161,50 @@ function menu:draw()
   local spacing = 2
   local font_h = 6
 
-  -- get menu dimensions
   local menu_w, menu_h = self:get_dimensions()
 
-  -- clamp position to screen bounds (128x128)
+  -- clamp to screen
   local draw_x = mid(0, self.x, 128 - menu_w - 2)
   local draw_y = mid(0, self.y, 128 - menu_h - 2)
 
-  -- draw background and drop shadow
+  -- shadow
   if self.show_shadow then
-    rectfill(draw_x+2, draw_y+2, draw_x+menu_w+2, draw_y+menu_h+2, self.dropcol)
+    rectfill(draw_x + 2, draw_y + 2, draw_x + menu_w + 2, draw_y + menu_h + 2, self.dropcol)
   end
+
+  -- background
   if self.show_bg then
-    rectfill(draw_x, draw_y, draw_x+menu_w, draw_y+menu_h, self.bgcol)
+    rectfill(draw_x, draw_y, draw_x + menu_w, draw_y + menu_h, self.bgcol)
   end
 
-  -- draw border
+  -- border
   if self.show_border then
-    rect(draw_x, draw_y, draw_x+menu_w, draw_y+menu_h, self.bordcol)
+    rect(draw_x, draw_y, draw_x + menu_w, draw_y + menu_h, self.bordcol)
   end
 
-  -- draw items
-  for i=1, #self.items do
+  -- items
+  for i = 1, #self.items do
     local item_x = draw_x + padding
-    local item_y = draw_y + padding + (font_h + spacing)*(i-1)
+    local item_y = draw_y + padding + (font_h + spacing) * (i - 1)
     local item = self.items[i]
     local is_selected = i == self.sel
     local is_disabled = not self:is_enabled(item)
     local label = self:get_label(item)
 
-    -- determine colors
     local shadow_col = is_selected and 0 or 1
     local text_col = is_disabled and 5 or (is_selected and 12 or 6)
 
-    print(label, item_x + 1, item_y + 1, shadow_col)  -- shadow
-    print(label, item_x, item_y, text_col)            -- text
+    print(label, item_x + 1, item_y + 1, shadow_col)
+    print(label, item_x, item_y, text_col)
   end
 
-  -- draw sub-menu
+  -- sub-menu
   local selected_item = self.items[self.sel]
   if selected_item.sub_menu and selected_item.sub_menu.active then
     local sub = selected_item.sub_menu
     sub.x = draw_x + menu_w + 2
-    sub.y = draw_y + (font_h + spacing)*(self.sel-1)
-    spr(0, sub.x-11, sub.y + padding) -- arrow
+    sub.y = draw_y + (font_h + spacing) * (self.sel - 1)
+    spr(0, sub.x - 11, sub.y + padding)
     sub:draw()
   end
 end

@@ -17,113 +17,110 @@ input = {
       x = "hold_5"
     }
   },
+  -- input has its own subscriber system, separate from message_bus
+  listeners = {},
+  -- stack of listener contexts for push/pop
   stack = {},
-  subs = {}
+  -- whether input is currently blocked (e.g., by overlay)
+  blocked = false
 }
 
-function input:update()
-  -- handle press events (btnp)
-  if btnp(self.button.up) then
-    message_bus:emit('btn:up')
-  end
-  if btnp(self.button.down) then
-    message_bus:emit('btn:down')
-  end
-  if btnp(self.button.left) then
-    message_bus:emit('btn:left')
-  end
-  if btnp(self.button.right) then
-    message_bus:emit('btn:right')
-  end
-  if btnp(self.button.x) then
-    message_bus:emit('btn:x')
-  end
-  if btnp(self.button.o) then
-    message_bus:emit('btn:o')
-  end
+-- button id to name lookup
+local btn_names = {"left", "right", "up", "down", "o", "x"}
 
-  -- handle hold events (btn) - emit every frame while held
-  if btn(self.button.up) then
-    message_bus:emit('btn:hold:up')
-  end
-  if btn(self.button.down) then
-    message_bus:emit('btn:hold:down')
-  end
-  if btn(self.button.left) then
-    message_bus:emit('btn:hold:left')
-  end
-  if btn(self.button.right) then
-    message_bus:emit('btn:hold:right')
-  end
-  if btn(self.button.x) then
-    message_bus:emit('btn:hold:x')
-  end
-  if btn(self.button.o) then
-    message_bus:emit('btn:hold:o')
+function input:update()
+  if self.blocked then return end
+
+  -- handle press events (btnp)
+  for id = 0, 5 do
+    if btnp(id) then
+      self:_emit("press:" .. btn_names[id + 1])
+    end
+    if btn(id) then
+      self:_emit("hold:" .. btn_names[id + 1])
+    end
   end
 end
 
+-- internal emit to input listeners only
+function input:_emit(event_key)
+  -- debug: store last emit for inspection
+  self.last_emit = event_key
+  self.listener_keys = ""
+  for k,v in pairs(self.listeners) do
+    self.listener_keys = self.listener_keys .. k .. " "
+    -- check for match
+    if k == event_key then
+      self.found_match = event_key
+    end
+  end
+
+  if not self.listeners[event_key] then
+    self.miss = event_key
+    return
+  end
+
+  self.hit = event_key
+  for handler in all(self.listeners[event_key]) do
+    handler()
+  end
+end
+
+-- bind handlers to input events
+-- usage:
+--   input:bind({
+--     [input.button.x] = function() ... end,              -- press
+--     [input.button.hold.left] = function() ... end,      -- hold
+--   })
+function input:bind(context)
+  for key, handler in pairs(context) do
+    local event_key
+
+    if type(key) == "string" and sub(key, 1, 5) == "hold_" then
+      -- it's a hold binding like "hold_0"
+      local btn_id = tonum(sub(key, 6))
+      event_key = "hold:" .. btn_names[btn_id + 1]
+    else
+      -- it's a button id, default to press
+      event_key = "press:" .. btn_names[key + 1]
+    end
+
+    if not self.listeners[event_key] then
+      self.listeners[event_key] = {}
+    end
+    add(self.listeners[event_key], handler)
+  end
+end
+
+-- push current listeners onto stack and start fresh
+function input:push()
+  add(self.stack, self.listeners)
+  self.listeners = {}
+end
+
+-- pop listeners from stack, restoring previous context
+function input:pop()
+  if #self.stack == 0 then return end
+  self.listeners = deli(self.stack)
+end
+
+-- clear all listeners (but not the stack)
+function input:clr()
+  self.listeners = {}
+end
+
+-- clear everything including stack
+function input:reset()
+  self.listeners = {}
+  self.stack = {}
+  self.blocked = false
+end
+
+-- helper for checking button state directly
 function input:down(b)
   return btn(b)
 end
 
 function input:pressed(b)
   return btnp(b)
-end
-
-function input:bind(context)
-  -- register a context (table of button -> handler pairs)
-  for btn, handler in pairs(context) do
-    local event
-
-    -- check if it's a hold binding
-    if type(btn) == "string" and sub(btn, 1, 5) == "hold_" then
-      -- it's a hold binding like "hold_5"
-      local btn_id = tonum(sub(btn, 6))
-      event = 'btn:hold:'..self:_btn_to_name(btn_id)
-    else
-      -- regular press binding
-      event = 'btn:'..self:_btn_to_name(btn)
-    end
-
-    if not self.subs[event] then
-      self.subs[event] = {}
-    end
-    add(self.subs[event], handler)
-    message_bus:subscribe(event, handler)
-  end
-end
-
-function input:_btn_to_name(btn)
-  for name, id in pairs(self.button) do
-    if id == btn then
-      return name
-    end
-  end
-  return 'unknown'
-end
-
-function input:push()
-  -- save current subscriptions and clear
-  add(self.stack, self.subs)
-  self.subs = {}
-  message_bus:clr()
-end
-
-function input:pop()
-  -- restore previous subscriptions
-  message_bus:clr()
-  self.subs = deli(self.stack)
-
-  -- re-subscribe all handlers
-  for event, handlers in pairs(self.subs) do
-    for handler in all(handlers) do
-      message_bus:subscribe(event, handler)
-    end
-  end
-end
-
-function input:clr()
-  self.subs = {}
-  message_bus:clr()
 end

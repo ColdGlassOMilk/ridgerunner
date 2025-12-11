@@ -15,6 +15,7 @@ __lua__
 
 -- scenes
 #include src/scenes/game_scene.lua
+#include src/scenes/pause_scene.lua
 #include src/scenes/title_scene.lua
 
 __gfx__
