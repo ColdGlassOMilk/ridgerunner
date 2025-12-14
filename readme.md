@@ -2,6 +2,7 @@
 A minimal boilerplate for Pico-8 projects with input management, scene handling, nested menus, and save/load functionality.
 
 ![Demo](./demo.gif)
+![Cart](/bp.p8.png)
 
 ## Features
 - **App Manager** – Central configuration with defaults and save data structure
