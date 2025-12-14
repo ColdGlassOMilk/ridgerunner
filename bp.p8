@@ -1,7 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
--- main
+-- pico-8 boilerplate
+
+-- entry point
 #include src/main.lua
 
 -- system
