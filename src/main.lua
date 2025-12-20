@@ -2,18 +2,23 @@
 
 function _init()
   app:init({
-    name = "pico8_bp_v1",
-    title = "Boilerplate v1",
-    defaults = {
-      bgcol = 1,
-      timer = 0
+    name = "ridgerunner_v1",
+    title = "Ridge Runner v1",
+    defaults = {},
+    -- boolean flags (all packed into address 60)
+    -- up to 16 flags supported, addresses 61-63 free
+    flags = {
+      music_on = true
     }
   })
 
+  options = app:load_options() or app:copy_flags_defaults()
+
+  mountains:init()
+
   -- register all scenes
-  scene:register('title', title_scene)
-  scene:register('game', game_scene)
-  scene:register('pause', pause_scene)
+  scene:register('game', gamescene)
+  scene:register('title', titlescene)
 
   scene:switch('title')
 end

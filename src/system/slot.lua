@@ -2,19 +2,32 @@
 
 slot = {
   slots = 3,
-  keys = {}
+  keys = {},
+  flags_keys = {},
+  -- address 60: bitflags (first_run at bit 0, then user flags)
+  -- addresses 61-63: available
+  flags_addr = 60
 }
 
 -- Initialize cartdata with save structure
-function slot:init(cart_id, keys)
+function slot:init(cart_id, keys, flags_keys)
   cartdata(cart_id or "pico8_bp_v1")
   self.keys = keys or {}
+  self.flags_keys = flags_keys or {}
 
   -- sort keys alphabetically for consistent order
   for i = 1, #self.keys - 1 do
     for j = i + 1, #self.keys do
       if self.keys[j] < self.keys[i] then
         self.keys[i], self.keys[j] = self.keys[j], self.keys[i]
+      end
+    end
+  end
+
+  for i = 1, #self.flags_keys - 1 do
+    for j = i + 1, #self.flags_keys do
+      if self.flags_keys[j] < self.flags_keys[i] then
+        self.flags_keys[i], self.flags_keys[j] = self.flags_keys[j], self.flags_keys[i]
       end
     end
   end
@@ -67,4 +80,36 @@ function slot:delete(s)
     dset((s - 1) * 20 + i, 0)
   end
   return true
+end
+
+-- Save options (flags packed into address 60)
+-- bit 0 = initialized flag, bits 1+ = user flags
+function slot:save_options(data)
+  local packed = 1  -- bit 0 = initialized
+  for i = 1, #self.flags_keys do
+    if data[self.flags_keys[i]] then
+      packed = packed + shl(1, i)
+    end
+  end
+  dset(self.flags_addr, packed)
+  return true
+end
+
+-- Load options (returns nil if never saved)
+function slot:load_options()
+  local packed = dget(self.flags_addr)
+  -- check initialized bit
+  if band(packed, 1) == 0 then
+    return nil
+  end
+  local data = {}
+  for i = 1, #self.flags_keys do
+    data[self.flags_keys[i]] = band(packed, shl(1, i)) > 0
+  end
+  return data
+end
+
+-- Reset options (clears address 60)
+function slot:reset_options()
+  dset(self.flags_addr, 0)
 end
