@@ -14,8 +14,10 @@ function menu:new(items, x, y, opts)
   local m = {
     x = x,
     y = y,
+    draw_y = 128,  -- start off-screen
     items = items or {},
     active = false,
+    visible = false,
     sel = 1,
     bgcol = opts.bgcol or 13,
     dropcol = opts.dropcol or 0,
@@ -49,6 +51,7 @@ end
 function menu:show(parent)
   self.sel = 1
   self.active = true
+  self.visible = true
   self.parent = parent
   if self.closeable then sfx(0, 3) end
 
@@ -58,6 +61,13 @@ function menu:show(parent)
     self.x = self.x or (64 - menu_w / 2)
     self.y = self.y or (64 - menu_h / 2)
   end
+
+  -- tween in from bottom
+  tween:cancel_all(self)
+  self.draw_y = 128
+  tween:new(self, {draw_y = self.y}, 12, {
+    ease = tween.ease.out_back
+  })
 
   -- push input context and bind menu controls
   input:push()
@@ -85,6 +95,15 @@ function menu:hide()
   self.active = false
   sfx(1, 3)
   input:pop()
+
+  -- tween out to bottom
+  tween:cancel_all(self)
+  tween:new(self, {draw_y = 128}, 10, {
+    ease = tween.ease.in_quad,
+    on_complete = function()
+      self.visible = false
+    end
+  })
 end
 
 -- Helper to check if item is enabled
@@ -155,7 +174,7 @@ end
 
 -- Draw menu
 function menu:draw()
-  if not self.active then return end
+  if not self.visible then return end
 
   local padding = 3
   local spacing = 2
@@ -163,9 +182,9 @@ function menu:draw()
 
   local menu_w, menu_h = self:get_dimensions()
 
-  -- clamp to screen
+  -- use draw_y for animation, x stays fixed
   local draw_x = mid(0, self.x, 128 - menu_w - 2)
-  local draw_y = mid(0, self.y, 128 - menu_h - 2)
+  local draw_y = self.draw_y
 
   -- shadow
   if self.show_shadow then
@@ -204,6 +223,7 @@ function menu:draw()
     local sub = selected_item.sub_menu
     sub.x = draw_x + menu_w + 2
     sub.y = draw_y + (font_h + spacing) * (self.sel - 1)
+    sub.draw_y = sub.y  -- sync draw_y for sub-menus
     spr(0, sub.x - 11, sub.y + padding)
     sub:draw()
   end

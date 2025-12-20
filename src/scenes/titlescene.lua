@@ -4,7 +4,7 @@ titlescene = {}
 function titlescene:init()
   main_menu = menu:new({
     {label='cONTINUE', action=function() end, enabled=function() return slot:exists(1) end},
-    {label='nEW gAME', action=function() scene:switch('game') music(-1, 0) end},
+    {label='nEW gAME', action=function() scene:switch('game') end},
     {label='lOAD', action=function() self.fsm:switch('load') end},
     {label='oPTIONS', action=function() self.fsm:switch('options') end},
     {label='cREDITS', action=function() self.fsm:switch('credits') end}
@@ -37,7 +37,7 @@ function titlescene:init()
 
   options_menu = menu:new({
     {label=function()
-      return 'mUSIC: ' .. (options.music_on and 'oN' or 'oFF')
+      return 'mUSIC: ' .. (options.music_on and '\#3oN ♪\#7' or '\#5oFF\#7')
     end, action=function()
       options.music_on = not options.music_on
       app:save_options(options)
@@ -66,9 +66,17 @@ function titlescene:init()
           if not slot:exists(1) then main_menu.sel = 2 end
         end
       },
+      init = function()
+        self.cont_y = 101
+        tween:loop(self, {cont_y = 96}, 30, {ease = tween.ease.in_out_quad})
+      end,
       draw = function()
         local w = print('print ❎ to begin', 0, -100)
-        print('press ❎ to begin', 63-w/2, 100, 2)
+        -- print('press ❎ to begin', 63-w/2, 100, 1)
+        print('press ❎ to begin', 63-w/2, self.cont_y, 2)
+      end,
+      exit = function()
+        tween:clear()
       end
     },
     main = {

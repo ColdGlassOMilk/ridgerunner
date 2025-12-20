@@ -1,13 +1,14 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
--- pico-8 boilerplate
+-- ridge runner
 
 -- entry point
 #include src/main.lua
 
 -- common
 #include src/common/mountains.lua
+#include src/common/player_menu.lua
 
 -- system
 #include src/system/app.lua
@@ -17,6 +18,7 @@ __lua__
 #include src/system/scene.lua
 #include src/system/slot.lua
 #include src/system/state.lua
+#include src/system/tween.lua
 
 -- scenes
 #include src/scenes/gamescene.lua

@@ -25,6 +25,7 @@ end
 
 function _update()
   input:update()
+  tween:update()
   scene:update()
 end
 
