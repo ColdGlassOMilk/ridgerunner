@@ -1,5 +1,10 @@
 -- game scene
 
+-- Enemies should have color replaced occassionally (every 5-10 waves?)
+-- color should coorespond to a buffed trait, like speed, attack, etc.
+
+-- Prestige system for replayability
+
 gamescene = {}
 
 -- helper: create save slot menu item (always enabled)
@@ -104,8 +109,8 @@ function gamescene:init(loaded_data)
   })
 
   local save_menu = menu:new({
-    {label='sAVE gAME', sub_menu=save_sub},
-    {label='lOAD gAME', sub_menu=load_sub},
+    {label='sAVE', sub_menu=save_sub},
+    {label='lOAD', sub_menu=load_sub},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
@@ -200,9 +205,9 @@ function gamescene:recalc_costs()
     self.costs[stat] = cost
   end
 
-  -- miner cost: base 50, scales 1.8x per owned
+  -- miner cost: base 50, scales 1.2x per owned
   local mc = bignum:new(50)
-  for i=1, self.miners do mc:mul(1.8) end
+  for i=1, self.miners do mc:mul(1.2) end
   self.costs.miner = mc
 end
 

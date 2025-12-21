@@ -17,8 +17,16 @@ end
 
 function bignum:norm()
   if self.m==0 then self.e=0 return self end
+  -- handle negative mantissa (from subtraction)
+  local neg = self.m < 0
+  if neg then self.m = -self.m end
+  -- scale down if too large
   while self.m>=999.99 do self.m/=10 self.e+=1 end
+  -- scale up if too small (but keep e >= 0 for small numbers)
+  while self.m<100 and self.e>0 do self.m*=10 self.e-=1 end
   while self.m<1 do self.m*=10 self.e-=1 end
+  -- restore sign
+  if neg then self.m = -self.m end
   return self
 end
 
