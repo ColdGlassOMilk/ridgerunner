@@ -8,7 +8,18 @@ function gamescene:init(loaded_data)
   self.battle_timer = 0
   self.battle_msg = ""
   self.msg_timer = 0
-  self.gold = data.gold or 0
+
+  -- gold uses bignum now
+  if data.gold_m then
+    -- loaded from save with bignum format
+    self.gold = bignum:new():unpack(data.gold_m, data.gold_e)
+  elseif data.gold then
+    -- legacy save or default
+    -- self.gold = bignum:new(data.gold)
+    self.gold = bignum:new(32765)
+  else
+    self.gold = bignum:new(0)
+  end
 
   self.player = {
     x = 20,
@@ -46,13 +57,13 @@ function gamescene:init(loaded_data)
   local shop_menu = menu:new({
     {
       label = function()
-        return 'aTK +1 (' .. self.costs.atk .. 'g)'
+        return 'aTK +1 (' .. self.costs.atk:tostr() .. 'g)'
       end,
       enabled = function()
-        return self.gold >= self.costs.atk
+        return self.gold:gte(self.costs.atk)
       end,
       action = function()
-        self.gold -= self.costs.atk
+        self.gold:sub(self.costs.atk:clone())
         self.player.atk += self.upgrade_amounts.atk
         self:recalc_costs()
         sfx(5, 3)
@@ -60,13 +71,13 @@ function gamescene:init(loaded_data)
     },
     {
       label = function()
-        return 'hP +5 (' .. self.costs.hp .. 'g)'
+        return 'hP +5 (' .. self.costs.hp:tostr() .. 'g)'
       end,
       enabled = function()
-        return self.gold >= self.costs.hp
+        return self.gold:gte(self.costs.hp)
       end,
       action = function()
-        self.gold -= self.costs.hp
+        self.gold:sub(self.costs.hp:clone())
         self.player.max_hp += self.upgrade_amounts.hp
         self.player.hp += self.upgrade_amounts.hp
         self:recalc_costs()
@@ -75,13 +86,13 @@ function gamescene:init(loaded_data)
     },
     {
       label = function()
-        return 'aRMOR +1 (' .. self.costs.armor .. 'g)'
+        return 'aRMOR +1 (' .. self.costs.armor:tostr() .. 'g)'
       end,
       enabled = function()
-        return self.gold >= self.costs.armor
+        return self.gold:gte(self.costs.armor)
       end,
       action = function()
-        self.gold -= self.costs.armor
+        self.gold:sub(self.costs.armor:clone())
         self.player.armor += self.upgrade_amounts.armor
         self:recalc_costs()
         sfx(5, 3)
@@ -89,13 +100,13 @@ function gamescene:init(loaded_data)
     },
     {
       label = function()
-        return 'sPD +2 (' .. self.costs.spd .. 'g)'
+        return 'sPD +2 (' .. self.costs.spd:tostr() .. 'g)'
       end,
       enabled = function()
-        return self.gold >= self.costs.spd
+        return self.gold:gte(self.costs.spd)
       end,
       action = function()
-        self.gold -= self.costs.spd
+        self.gold:sub(self.costs.spd:clone())
         self.player.spd += self.upgrade_amounts.spd
         self:recalc_costs()
         sfx(5, 3)
@@ -246,7 +257,7 @@ function gamescene:init(loaded_data)
       init = function(s, data)
         -- gold reward scales with wave
         local reward = 5 + self.wave * 2
-        self.gold += reward
+        self.gold:add(reward)
         self:show_msg("vICTORY! +" .. reward .. "g")
         self.victory_timer = 60
         self:reset_player()
@@ -288,7 +299,7 @@ function gamescene:init(loaded_data)
     end,
     [input.button.o] = function()
       if not player_menu.active then
-        self.gold += 1
+        self.gold:add(10000)
         sfx(2, 3)
       end
     end
@@ -357,11 +368,19 @@ function gamescene:recalc_costs()
     local key = stat == "hp" and "max_hp" or stat
     local current = self.player[key]
     local upgrades = (current - defaults[key]) / per[key]
-    self.costs[stat] = flr(base_cost * (1.5 ^ upgrades))
+    -- use bignum for costs to handle large values
+    -- multiply by 1.5 repeatedly to avoid overflow from 1.5^n
+    local cost = bignum:new(base_cost)
+    for i = 1, upgrades do
+      cost:mul(1.5)
+    end
+    self.costs[stat] = cost
   end
 end
 
 function gamescene:save_game(slot_num)
+  -- pack gold into mantissa and exponent for save
+  local gold_m, gold_e = self.gold:pack()
   local data = {
     hp = self.player.hp,
     max_hp = self.player.max_hp,
@@ -369,7 +388,8 @@ function gamescene:save_game(slot_num)
     armor = self.player.armor,
     spd = self.player.spd,
     wave = self.wave,
-    gold = self.gold
+    gold_m = gold_m,
+    gold_e = gold_e
   }
   slot:save(slot_num, data)
   self:show_msg("gAME sAVED!")
@@ -387,7 +407,13 @@ function gamescene:load_game(slot_num)
 
     -- restore progress
     self.wave = data.wave
-    self.gold = data.gold
+
+    -- restore gold (handle both old and new save formats)
+    if data.gold_m then
+      self.gold:unpack(data.gold_m, data.gold_e)
+    elseif data.gold then
+      self.gold:set(data.gold)
+    end
 
     -- recalculate upgrade costs based on loaded stats
     self:recalc_costs()
@@ -510,7 +536,7 @@ function gamescene:draw()
 
   -- left side: wave and gold
   print("wAVE " .. self.wave, 2, 2, 6)
-  print("★" .. self.gold, 2, 10, 10)
+  print("★" .. self.gold:tostr(), 2, 10, 10)
 
   -- right side: player stats
   self:print_right("aTK " .. self.player.atk, 2, 8)
