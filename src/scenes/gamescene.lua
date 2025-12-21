@@ -1,31 +1,40 @@
 gamescene = {}
 
-function gamescene:init()
-  -- game data
-  self.wave = 1
+function gamescene:init(loaded_data)
+  -- game data - use loaded data or defaults
+  local data = loaded_data or app:copy_defaults()
+
+  self.wave = data.wave or 1
   self.battle_timer = 0
   self.battle_msg = ""
   self.msg_timer = 0
-  self.gold = 0
+  self.gold = data.gold or 0
 
   self.player = {
     x = 20,
+    base_x = 20,
     y = 80,
     base_y = 80,
-    hp = 10,
-    max_hp = 10,
-    atk = 3,
-    armor = 0,
+    hp = data.hp or 10,
+    max_hp = data.max_hp or 10,
+    atk = data.atk or 3,
+    armor = data.armor or 0,
+    spd = data.spd or 10,
+    action_timer = 0,
     spr = 16
   }
   self.enemy = nil
 
-  -- upgrade costs (increase after each purchase)
-  self.costs = {
-    atk = 10,
-    hp = 8,
-    armor = 15
+  -- upgrade amounts
+  self.upgrade_amounts = {
+    atk = 1,
+    hp = 5,
+    armor = 1,
+    spd = 2
   }
+
+  -- calculate costs based on current stats
+  self:recalc_costs()
 
   -- submenus for player menu
   local inv_menu = menu:new({
@@ -44,8 +53,8 @@ function gamescene:init()
       end,
       action = function()
         self.gold -= self.costs.atk
-        self.player.atk += 1
-        self.costs.atk = flr(self.costs.atk * 1.5)
+        self.player.atk += self.upgrade_amounts.atk
+        self:recalc_costs()
         sfx(5, 3)
       end
     },
@@ -58,9 +67,9 @@ function gamescene:init()
       end,
       action = function()
         self.gold -= self.costs.hp
-        self.player.max_hp += 5
-        self.player.hp += 5
-        self.costs.hp = flr(self.costs.hp * 1.5)
+        self.player.max_hp += self.upgrade_amounts.hp
+        self.player.hp += self.upgrade_amounts.hp
+        self:recalc_costs()
         sfx(5, 3)
       end
     },
@@ -73,16 +82,96 @@ function gamescene:init()
       end,
       action = function()
         self.gold -= self.costs.armor
-        self.player.armor += 1
-        self.costs.armor = flr(self.costs.armor * 1.5)
+        self.player.armor += self.upgrade_amounts.armor
+        self:recalc_costs()
+        sfx(5, 3)
+      end
+    },
+    {
+      label = function()
+        return 'sPD +2 (' .. self.costs.spd .. 'g)'
+      end,
+      enabled = function()
+        return self.gold >= self.costs.spd
+      end,
+      action = function()
+        self.gold -= self.costs.spd
+        self.player.spd += self.upgrade_amounts.spd
+        self:recalc_costs()
         sfx(5, 3)
       end
     }
   })
 
+  local save_submenu = menu:new({
+    {label=function()
+      if slot:exists(1) then
+        local d = slot:load(1)
+        return 'sLOT 1 - wAVE ' .. d.wave
+      end
+      return 'sLOT 1 - eMPTY'
+    end, action=function()
+      self:save_game(1)
+      return true
+    end},
+    {label=function()
+      if slot:exists(2) then
+        local d = slot:load(2)
+        return 'sLOT 2 - wAVE ' .. d.wave
+      end
+      return 'sLOT 2 - eMPTY'
+    end, action=function()
+      self:save_game(2)
+      return true
+    end},
+    {label=function()
+      if slot:exists(3) then
+        local d = slot:load(3)
+        return 'sLOT 3 - wAVE ' .. d.wave
+      end
+      return 'sLOT 3 - eMPTY'
+    end, action=function()
+      self:save_game(3)
+      return true
+    end}
+  })
+
+  local load_submenu = menu:new({
+    {label=function()
+      if slot:exists(1) then
+        local d = slot:load(1)
+        return 'sLOT 1 - wAVE ' .. d.wave
+      end
+      return 'sLOT 1 - eMPTY'
+    end, enabled=function() return slot:exists(1) end, action=function()
+      self:load_game(1)
+      return true
+    end},
+    {label=function()
+      if slot:exists(2) then
+        local d = slot:load(2)
+        return 'sLOT 2 - wAVE ' .. d.wave
+      end
+      return 'sLOT 2 - eMPTY'
+    end, enabled=function() return slot:exists(2) end, action=function()
+      self:load_game(2)
+      return true
+    end},
+    {label=function()
+      if slot:exists(3) then
+        local d = slot:load(3)
+        return 'sLOT 3 - wAVE ' .. d.wave
+      end
+      return 'sLOT 3 - eMPTY'
+    end, enabled=function() return slot:exists(3) end, action=function()
+      self:load_game(3)
+      return true
+    end}
+  })
+
   local save_menu = menu:new({
-    {label = 'sAVE gAME', action = function() return true end},
-    {label = 'lOAD gAME', action = function() return true end},
+    {label = 'sAVE gAME', sub_menu = save_submenu},
+    {label = 'lOAD gAME', sub_menu = load_submenu},
     {label = 'qUIT', action = function() scene:switch('title') end}
   })
 
@@ -112,9 +201,15 @@ function gamescene:init()
 
     battle = {
       init = function(s, data)
-        self.battle_timer = 30
-        self.player_turn = true
         self:show_msg("eNEMY aPPROACHED!")
+
+        -- initialize action timers based on speed
+        -- higher speed = lower timer = attacks sooner
+        local base_action_time = 60
+        self.player.action_timer = flr(base_action_time * 10 / self.player.spd)
+        if self.enemy then
+          self.enemy.action_timer = flr(base_action_time * 10 / self.enemy.spd)
+        end
 
         -- stop enemy horizontal movement, keep bobbing
         if self.enemy then
@@ -123,15 +218,26 @@ function gamescene:init()
         end
       end,
       update = function(s, data)
-        self.battle_timer -= 1
+        if not self.enemy or self.enemy.dying then return end
 
-        if self.battle_timer <= 0 then
-          if self.player_turn then
-            self:player_attack()
-          else
-            self:enemy_attack()
-          end
-          self.battle_timer = 30
+        -- tick down both timers
+        self.player.action_timer -= 1
+        self.enemy.action_timer -= 1
+
+        -- check who attacks
+        if self.player.action_timer <= 0 then
+          self:player_attack()
+          -- reset timer based on speed
+          local base_action_time = 60
+          self.player.action_timer = flr(base_action_time * 10 / self.player.spd)
+        end
+
+        -- enemy may have died from player attack
+        if self.enemy and not self.enemy.dying and self.enemy.action_timer <= 0 then
+          self:enemy_attack()
+          -- reset timer based on speed
+          local base_action_time = 60
+          self.enemy.action_timer = flr(base_action_time * 10 / self.enemy.spd)
         end
       end
     },
@@ -192,6 +298,7 @@ end
 function gamescene:spawn_enemy()
   local base_hp = 5 + self.wave * 2
   local base_atk = 1 + flr(self.wave / 2)
+  local base_spd = 8 + flr(self.wave * 0.5)  -- enemies get faster each wave
   local base_y = 80
 
   self.enemy = {
@@ -201,6 +308,8 @@ function gamescene:spawn_enemy()
     hp = base_hp,
     max_hp = base_hp,
     atk = base_atk,
+    spd = base_spd,
+    action_timer = 0,
     spr = 32
   }
 
@@ -225,7 +334,9 @@ end
 
 function gamescene:reset_player()
   self.player.hp = self.player.max_hp
+  self.player.x = self.player.base_x
   self.player.y = self.player.base_y
+  self.player.action_timer = 0
 end
 
 function gamescene:show_msg(msg)
@@ -233,15 +344,78 @@ function gamescene:show_msg(msg)
   self.msg_timer = 45
 end
 
-function gamescene:player_attack()
-  if not self.enemy then return end
+function gamescene:recalc_costs()
+  -- base costs
+  local base = {atk = 10, hp = 8, armor = 15, spd = 12}
+  -- default stat values
+  local defaults = {atk = 3, max_hp = 10, armor = 0, spd = 10}
+  -- upgrade amounts
+  local per = {atk = 1, max_hp = 5, armor = 1, spd = 2}
 
-  -- attack lunge animation
-  local orig_x = self.player.x
-  tween:new(self.player, {x = orig_x + 8}, 6, {
+  self.costs = {}
+  for stat, base_cost in pairs(base) do
+    local key = stat == "hp" and "max_hp" or stat
+    local current = self.player[key]
+    local upgrades = (current - defaults[key]) / per[key]
+    self.costs[stat] = flr(base_cost * (1.5 ^ upgrades))
+  end
+end
+
+function gamescene:save_game(slot_num)
+  local data = {
+    hp = self.player.hp,
+    max_hp = self.player.max_hp,
+    atk = self.player.atk,
+    armor = self.player.armor,
+    spd = self.player.spd,
+    wave = self.wave,
+    gold = self.gold
+  }
+  slot:save(slot_num, data)
+  self:show_msg("gAME sAVED!")
+end
+
+function gamescene:load_game(slot_num)
+  local data = slot:load(slot_num)
+  if data then
+    -- restore player stats
+    self.player.hp = data.hp
+    self.player.max_hp = data.max_hp
+    self.player.atk = data.atk
+    self.player.armor = data.armor
+    self.player.spd = data.spd
+
+    -- restore progress
+    self.wave = data.wave
+    self.gold = data.gold
+
+    -- recalculate upgrade costs based on loaded stats
+    self:recalc_costs()
+
+    -- reset battle state
+    tween:cancel_all(self.player)
+    if self.enemy then
+      tween:cancel_all(self.enemy)
+    end
+    self.enemy = nil
+    self.player.x = self.player.base_x
+    self.player.y = self.player.base_y
+
+    -- restart from walking state
+    self.fsm:switch('walking')
+
+    self:show_msg("gAME lOADED!")
+  end
+end
+
+function gamescene:player_attack()
+  if not self.enemy or self.enemy.dying then return end
+
+  -- attack lunge animation using base_x to prevent drift
+  tween:new(self.player, {x = self.player.base_x + 8}, 6, {
     ease = tween.ease.out_quad,
     on_complete = function()
-      tween:new(self.player, {x = orig_x}, 6, {ease = tween.ease.in_quad})
+      tween:new(self.player, {x = self.player.base_x}, 6, {ease = tween.ease.in_quad})
     end
   })
 
@@ -260,6 +434,8 @@ function gamescene:player_attack()
   })
 
   if self.enemy.hp <= 0 then
+    -- mark as dying so no more attacks happen
+    self.enemy.dying = true
     -- death animation
     tween:cancel_all(self.enemy)
     tween:new(self.enemy, {y = self.enemy.base_y + 20, x = self.enemy.x + 10}, 30, {
@@ -271,8 +447,6 @@ function gamescene:player_attack()
     })
     return
   end
-
-  self.player_turn = false
 end
 
 function gamescene:enemy_attack()
@@ -293,12 +467,11 @@ function gamescene:enemy_attack()
   self:show_msg("eNEMY hIT FOR " .. dmg .. "!")
   sfx(6, 3)
 
-  -- player hit reaction
-  local player_orig_x = self.player.x
-  tween:new(self.player, {x = player_orig_x - 4}, 4, {
+  -- player hit reaction using base_x to prevent drift
+  tween:new(self.player, {x = self.player.base_x - 4}, 4, {
     ease = tween.ease.out_quad,
     on_complete = function()
-      tween:new(self.player, {x = player_orig_x}, 8, {ease = tween.ease.out_elastic})
+      tween:new(self.player, {x = self.player.base_x}, 8, {ease = tween.ease.out_elastic})
     end
   })
 
@@ -307,8 +480,6 @@ function gamescene:enemy_attack()
     self.fsm:switch('defeat')
     return
   end
-
-  self.player_turn = true
 end
 
 function gamescene:print_right(txt, y, col)
@@ -343,8 +514,9 @@ function gamescene:draw()
 
   -- right side: player stats
   self:print_right("aTK " .. self.player.atk, 2, 8)
-  self:print_right("aRM " .. self.player.armor, 10, 12)
-  self:print_right("hP " .. self.player.hp .. "/" .. self.player.max_hp, 18, 11)
+  self:print_right("sPD " .. self.player.spd, 10, 11)
+  self:print_right("aRM " .. self.player.armor, 18, 12)
+  self:print_right("hP " .. self.player.hp .. "/" .. self.player.max_hp, 26, 11)
 
   -- player hp bar
   local bar_w = 30
@@ -353,12 +525,32 @@ function gamescene:draw()
   rectfill(10, 70, 10 + bar_w * hp_pct, 74, 11)
   rect(10, 70, 10 + bar_w, 74, 5)
 
+  -- player action timer bar (shows when next attack happens)
+  if self.fsm.current == "battle" and self.enemy then
+    local base_action_time = 60
+    local max_timer = flr(base_action_time * 10 / self.player.spd)
+    local timer_pct = mid(0, 1 - self.player.action_timer / max_timer, 1)
+    rectfill(10, 76, 10 + bar_w, 78, 1)
+    rectfill(10, 76, 10 + bar_w * timer_pct, 78, 12)
+    rect(10, 76, 10 + bar_w, 78, 5)
+  end
+
   -- enemy hp bar
   if self.enemy then
     local ehp_pct = mid(0, self.enemy.hp / self.enemy.max_hp, 1)
     rectfill(88, 70, 88 + bar_w, 74, 1)
     rectfill(88, 70, 88 + bar_w * ehp_pct, 74, 8)
     rect(88, 70, 88 + bar_w, 74, 5)
+
+    -- enemy action timer bar
+    if self.fsm.current == "battle" then
+      local base_action_time = 60
+      local max_timer = flr(base_action_time * 10 / self.enemy.spd)
+      local timer_pct = mid(0, 1 - self.enemy.action_timer / max_timer, 1)
+      rectfill(88, 76, 88 + bar_w, 78, 1)
+      rectfill(88, 76, 88 + bar_w * timer_pct, 78, 8)
+      rect(88, 76, 88 + bar_w, 78, 5)
+    end
   end
 
   -- battle message

@@ -3,7 +3,12 @@ titlescene = {}
 
 function titlescene:init()
   main_menu = menu:new({
-    {label='cONTINUE', action=function() end, enabled=function() return slot:exists(1) end},
+    {label='cONTINUE', action=function()
+      local data = slot:load(1)
+      if data then
+        scene:switch('game', data)
+      end
+    end, enabled=function() return slot:exists(1) end},
     {label='nEW gAME', action=function() scene:switch('game') end},
     {label='lOAD', action=function() self.fsm:switch('load') end},
     {label='oPTIONS', action=function() self.fsm:switch('options') end},
@@ -15,17 +20,50 @@ function titlescene:init()
   })
 
   load_menu = menu:new({
-    {label='sLOT 1', action=function() end, enabled=function() slot:exists(1) end},
-    {label='sLOT 2', action=function() end, enabled=function() slot:exists(2) end},
-    {label='sLOT 3', action=function() end, enabled=function() slot:exists(3) end},
+    {label=function()
+      if slot:exists(1) then
+        local data = slot:load(1)
+        return 'sLOT 1 - wAVE ' .. data.wave
+      end
+      return 'sLOT 1 - eMPTY'
+    end, action=function()
+      local data = slot:load(1)
+      if data then
+        scene:switch('game', data)
+      end
+    end, enabled=function() return slot:exists(1) end},
+    {label=function()
+      if slot:exists(2) then
+        local data = slot:load(2)
+        return 'sLOT 2 - wAVE ' .. data.wave
+      end
+      return 'sLOT 2 - eMPTY'
+    end, action=function()
+      local data = slot:load(2)
+      if data then
+        scene:switch('game', data)
+      end
+    end, enabled=function() return slot:exists(2) end},
+    {label=function()
+      if slot:exists(3) then
+        local data = slot:load(3)
+        return 'sLOT 3 - wAVE ' .. data.wave
+      end
+      return 'sLOT 3 - eMPTY'
+    end, action=function()
+      local data = slot:load(3)
+      if data then
+        scene:switch('game', data)
+      end
+    end, enabled=function() return slot:exists(3) end},
     {label='dELETE', sub_menu=menu:new({
-      {label='sLOT 1', sub_menu=menu:new({
+      {label='sLOT 1', enabled=function() return slot:exists(1) end, sub_menu=menu:new({
         {label='cONFIRM?', action=function() return slot:delete(1) end}
       })},
-      {label='sLOT 2', sub_menu=menu:new({
+      {label='sLOT 2', enabled=function() return slot:exists(2) end, sub_menu=menu:new({
         {label='cONFIRM?', action=function() return slot:delete(2) end}
       })},
-      {label='sLOT 3', sub_menu=menu:new({
+      {label='sLOT 3', enabled=function() return slot:exists(3) end, sub_menu=menu:new({
         {label='cONFIRM?', action=function() return slot:delete(3) end}
       })},
     })}

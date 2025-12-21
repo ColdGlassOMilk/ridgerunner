@@ -4,7 +4,17 @@ function _init()
   app:init({
     name = "ridgerunner_v1",
     title = "Ridge Runner v1",
-    defaults = {},
+    defaults = {
+      -- player stats
+      hp = 10,
+      max_hp = 10,
+      atk = 3,
+      armor = 0,
+      spd = 10,
+      -- progress
+      wave = 1,
+      gold = 0
+    },
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free
     flags = {
