@@ -15,8 +15,7 @@ function gamescene:init(loaded_data)
     self.gold = bignum:new():unpack(data.gold_m, data.gold_e)
   elseif data.gold then
     -- legacy save or default
-    -- self.gold = bignum:new(data.gold)
-    self.gold = bignum:new(32765)
+    self.gold = bignum:new(data.gold)
   else
     self.gold = bignum:new(0)
   end
