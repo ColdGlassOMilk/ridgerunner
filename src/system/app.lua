@@ -2,7 +2,6 @@
 
 app = {
   name = nil,
-  title = nil,
   defaults = {},
   flags_defaults = {}
 }
@@ -28,13 +27,13 @@ function app:init(config)
   slot:init(self.name, keys, flags_keys)
 end
 
-function app:save(slot_num, data)
-  return slot:save(slot_num, data)
-end
+-- function app:save(slot_num, data)
+--   return slot:save(slot_num, data)
+-- end
 
-function app:load(slot_num)
-  return slot:load(slot_num)
-end
+-- function app:load(slot_num)
+--   return slot:load(slot_num)
+-- end
 
 function app:save_options(data)
   return slot:save_options(data)

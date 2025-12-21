@@ -1,18 +1,12 @@
 -- game scene
 
--- TODO:
--- Buy Miners - Auto-mining
--- Prestige system - maybe once you hit level 100?
-
 gamescene = {}
 
 -- helper: create save slot menu item (always enabled)
 local function save_slot_item(n, action_fn)
   return {
     label = function()
-      if slot:exists(n) then
-        return 'sLOT '..n..' - wAVE '..slot:load(n).wave
-      end
+      if slot:exists(n) then return 'sLOT '..n..' - wAVE '..slot:load(n).wave end
       return 'sLOT '..n..' - eMPTY'
     end,
     action = function() action_fn(n) return true end
@@ -23,9 +17,7 @@ end
 local function load_slot_item(n, action_fn)
   return {
     label = function()
-      if slot:exists(n) then
-        return 'sLOT '..n..' - wAVE '..slot:load(n).wave
-      end
+      if slot:exists(n) then return 'sLOT '..n..' - wAVE '..slot:load(n).wave end
       return 'sLOT '..n..' - eMPTY'
     end,
     enabled = function() return slot:exists(n) end,
@@ -36,12 +28,8 @@ end
 -- helper: create upgrade menu item
 local function upgrade_item(gs, stat, label, amt)
   return {
-    label = function()
-      return label..' +'..amt..' ('..gs.costs[stat]:tostr()..'g)'
-    end,
-    enabled = function()
-      return gs.gold:gte(gs.costs[stat])
-    end,
+    label = function() return label..' +'..amt..' ('..gs.costs[stat]:tostr()..'g)' end,
+    enabled = function() return gs.gold:gte(gs.costs[stat]) end,
     action = function()
       gs.gold:sub(gs.costs[stat]:clone())
       local key = stat == 'hp' and 'max_hp' or stat
@@ -53,10 +41,22 @@ local function upgrade_item(gs, stat, label, amt)
   }
 end
 
-function gamescene:init(loaded_data)
-  -- clear any stale tweens from previous scene
-  tween:clear()
+-- helper: create miner hire menu item
+local function miner_item(gs)
+  return {
+    label = function() return 'hIRE mINER ('..gs.costs.miner:tostr()..'g) x'..gs.miners end,
+    enabled = function() return gs.gold:gte(gs.costs.miner) end,
+    action = function()
+      gs.gold:sub(gs.costs.miner:clone())
+      gs.miners += 1
+      gs:recalc_costs()
+      sfx(5, 3)
+    end
+  }
+end
 
+function gamescene:init(loaded_data)
+  tween:clear()
   local data = loaded_data or app:copy_defaults()
 
   self.wave = data.wave or 1
@@ -66,6 +66,9 @@ function gamescene:init(loaded_data)
   self.gold = bignum:new(data.gold_m and 0 or (data.gold or 0))
   if data.gold_m then self.gold:unpack(data.gold_m, data.gold_e) end
 
+  -- miners for auto-mining
+  self.miners, self.mine_timer = data.miners or 0, 0
+
   self.player = {
     x = 20, base_x = 20, y = 80, base_y = 80,
     hp = data.hp or 10, max_hp = data.max_hp or 10,
@@ -73,12 +76,12 @@ function gamescene:init(loaded_data)
     action_timer = 0, spr = 16
   }
   self.enemy = nil
-  self.upgrade_amts = {atk=1, hp=5, armor=1, spd=2}
   self:recalc_costs()
 
-  -- menus (using helpers to reduce repetition)
+  -- menus
   local inv_menu = menu:new({
-    {label='eNTER mINE', action=function() scene:switch('mine', self) end}
+    {label='eNTER mINE', action=function() scene:switch('mine', self) end},
+    miner_item(self)
   })
 
   local shop_menu = menu:new({
@@ -107,9 +110,9 @@ function gamescene:init(loaded_data)
   })
 
   player_menu = menu:new({
-    {spr=1, sub_menu=inv_menu},
     {spr=2, sub_menu=shop_menu},
-    {spr=3, sub_menu=save_menu},
+    {spr=1, sub_menu=inv_menu},
+    {spr=3, sub_menu=save_menu}
   }, nil, 112, {horizontal=true, icon_size=8, spacing=4})
 
   -- fsm
@@ -122,6 +125,7 @@ function gamescene:init(loaded_data)
       end,
       update = function() mountains:update() end
     },
+
     battle = {
       init = function()
         self:show_msg("eNEMY aPPROACHED!")
@@ -137,17 +141,17 @@ function gamescene:init(loaded_data)
         if not self.enemy or self.enemy.dying then return end
         self.player.action_timer -= 1
         self.enemy.action_timer -= 1
-        local base = 60
         if self.player.action_timer <= 0 then
           self:player_attack()
-          self.player.action_timer = flr(base * 10 / self.player.spd)
+          self.player.action_timer = flr(60 * 10 / self.player.spd)
         end
         if self.enemy and not self.enemy.dying and self.enemy.action_timer <= 0 then
           self:enemy_attack()
-          self.enemy.action_timer = flr(base * 10 / self.enemy.spd)
+          self.enemy.action_timer = flr(60 * 10 / self.enemy.spd)
         end
       end
     },
+
     victory = {
       init = function()
         local reward = 5 + self.wave * 2
@@ -158,12 +162,10 @@ function gamescene:init(loaded_data)
       end,
       update = function()
         self.timer -= 1
-        if self.timer <= 0 then
-          self.wave += 1
-          self.fsm:switch('walking')
-        end
+        if self.timer <= 0 then self.wave += 1 self.fsm:switch('walking') end
       end
     },
+
     defeat = {
       init = function()
         self:show_msg("dEFEATED!")
@@ -173,10 +175,7 @@ function gamescene:init(loaded_data)
       end,
       update = function()
         self.timer -= 1
-        if self.timer <= 0 then
-          self:reset_player()
-          self.fsm:switch('walking')
-        end
+        if self.timer <= 0 then self:reset_player() self.fsm:switch('walking') end
       end
     }
   }, 'walking')
@@ -184,13 +183,7 @@ function gamescene:init(loaded_data)
   input:bind({
     [input.button.x] = function()
       if not player_menu.active then player_menu:show() end
-    end,
-    -- [input.button.o] = function()
-    --   if not player_menu.active then
-    --     self.gold:add(10000)
-    --     sfx(2, 3)
-    --   end
-    -- end
+    end
   })
 end
 
@@ -199,13 +192,18 @@ function gamescene:recalc_costs()
   local defs = {atk=3, max_hp=10, armor=0, spd=10}
   local per = {atk=1, max_hp=5, armor=1, spd=2}
   self.costs = {}
+
   for stat, bc in pairs(base) do
     local key = stat == 'hp' and 'max_hp' or stat
-    local ups = (self.player[key] - defs[key]) / per[key]
     local cost = bignum:new(bc)
-    for i=1, ups do cost:mul(1.5) end
+    for i=1, (self.player[key] - defs[key]) / per[key] do cost:mul(1.5) end
     self.costs[stat] = cost
   end
+
+  -- miner cost: base 50, scales 1.8x per owned
+  local mc = bignum:new(50)
+  for i=1, self.miners do mc:mul(1.8) end
+  self.costs.miner = mc
 end
 
 function gamescene:spawn_enemy()
@@ -218,8 +216,9 @@ function gamescene:spawn_enemy()
     spd = 8 + flr(self.wave*0.5),
     action_timer=0, spr=18
   }
+
   local tx = self.player.x + 16
-  local dur = max((self.enemy.x - tx) * (2 - self.wave*0.05), 60)
+  local dur = max((140 - tx) * (2 - self.wave*0.05), 60)
   tween:cancel_all(self.enemy)
   tween:new(self.enemy, {x=tx}, dur, {
     ease=tween.ease.out_quad,
@@ -234,14 +233,16 @@ function gamescene:reset_player()
   self.player.action_timer = 0
 end
 
-function gamescene:show_msg(msg) self.battle_msg, self.msg_timer = msg, 45 end
+function gamescene:show_msg(msg)
+  self.battle_msg, self.msg_timer = msg, 45
+end
 
 function gamescene:save_game(n)
   local gm, ge = self.gold:pack()
   slot:save(n, {
     hp=self.player.hp, max_hp=self.player.max_hp,
     atk=self.player.atk, armor=self.player.armor, spd=self.player.spd,
-    wave=self.wave, gold_m=gm, gold_e=ge
+    wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners
   })
   self:show_msg("gAME sAVED!")
 end
@@ -249,11 +250,17 @@ end
 function gamescene:load_game(n)
   local d = slot:load(n)
   if not d then return end
+
   self.player.hp, self.player.max_hp = d.hp, d.max_hp
   self.player.atk, self.player.armor, self.player.spd = d.atk, d.armor, d.spd
-  self.wave = d.wave
-  if d.gold_m then self.gold:unpack(d.gold_m, d.gold_e)
-  elseif d.gold then self.gold:set(d.gold) end
+  self.wave, self.miners = d.wave, d.miners or 0
+
+  if d.gold_m then
+    self.gold:unpack(d.gold_m, d.gold_e)
+  elseif d.gold then
+    self.gold:set(d.gold)
+  end
+
   self:recalc_costs()
   tween:cancel_all(self.player)
   if self.enemy then tween:cancel_all(self.enemy) end
@@ -265,16 +272,19 @@ end
 
 function gamescene:player_attack()
   if not self.enemy or self.enemy.dying then return end
+
   tween:new(self.player, {x=self.player.base_x+8}, 6, {
     ease=tween.ease.out_quad,
     on_complete=function()
       tween:new(self.player, {x=self.player.base_x}, 6, {ease=tween.ease.in_quad})
     end
   })
+
   local dmg = self.player.atk + flr(rnd(3))
   self.enemy.hp -= dmg
   self:show_msg("hIT FOR "..dmg.." dMG!")
-  sfx(5, 3)  -- player hit sound
+  sfx(5, 3)
+
   if self.enemy.hp <= 0 then
     self.enemy.dying = true
     tween:cancel_all(self.enemy)
@@ -290,22 +300,26 @@ end
 
 function gamescene:enemy_attack()
   if not self.enemy or self.enemy.dying then return end
+
   tween:new(self.enemy, {x=self.enemy.x-8}, 6, {
     ease=tween.ease.out_quad,
     on_complete=function()
       tween:new(self.enemy, {x=self.player.x+16}, 6, {ease=tween.ease.in_quad})
     end
   })
+
   local dmg = max(0, self.enemy.atk - self.player.armor) + flr(rnd(2))
   self.player.hp -= dmg
   self:show_msg("tOOK "..dmg.." dMG!")
   sfx(6, 3)
+
   tween:new(self.player, {x=self.player.base_x-4}, 4, {
     ease=tween.ease.out_quad,
     on_complete=function()
       tween:new(self.player, {x=self.player.base_x}, 8, {ease=tween.ease.out_elastic})
     end
   })
+
   if self.player.hp <= 0 then
     self.player.hp = 0
     self.fsm:switch('defeat')
@@ -316,35 +330,48 @@ function gamescene:update()
   self.fsm:update()
   player_menu:update()
   if self.msg_timer > 0 then self.msg_timer -= 1 end
+
+  -- auto-mining: each miner generates 1 gold per second (30 frames)
+  if self.miners > 0 then
+    self.mine_timer += 1
+    if self.mine_timer >= 30 then
+      self.gold:add(self.miners)
+      self.mine_timer = 0
+    end
+  end
 end
 
 function gamescene:draw()
   cls()
   mountains:draw()
+
+  -- sprites
   spr(self.player.spr, self.player.x, self.player.y, 2, 2)
   if self.enemy then spr(self.enemy.spr, self.enemy.x, self.enemy.y, 2, 2) end
 
   -- hud
   print("wAVE "..self.wave, 2, 2, 6)
   print("★"..self.gold:tostr(), 2, 10, 10)
+  -- if self.miners > 0 then print("⛏"..self.miners, 2, 18, 9) end
+
   local function pr(t,y,c) local w=print(t,0,-100) print(t,126-w,y,c) end
   pr("aTK "..self.player.atk, 2, 8)
   pr("sPD "..self.player.spd, 10, 11)
   pr("aRM "..self.player.armor, 18, 12)
   pr("hP "..self.player.hp.."/"..self.player.max_hp, 26, 11)
 
-  -- bars
+  -- health/action bars
   local bw = 30
   local function bar(x,y,pct,c)
     rectfill(x,y,x+bw,y+4,1)
     rectfill(x,y,x+bw*pct,y+4,c)
     rect(x,y,x+bw,y+4,5)
   end
+
   bar(10, 70, mid(0, self.player.hp/self.player.max_hp, 1), 11)
 
   if self.fsm.current == "battle" and self.enemy then
-    local base = 60
-    local pmax = flr(base*10/self.player.spd)
+    local pmax = flr(60*10/self.player.spd)
     rectfill(10, 76, 10+bw, 78, 1)
     rectfill(10, 76, 10+bw*mid(0, 1-self.player.action_timer/pmax, 1), 78, 12)
     rect(10, 76, 10+bw, 78, 5)
@@ -353,29 +380,24 @@ function gamescene:draw()
   if self.enemy then
     bar(88, 70, mid(0, self.enemy.hp/self.enemy.max_hp, 1), 8)
     if self.fsm.current == "battle" then
-      local base = 60
-      local emax = flr(base*10/self.enemy.spd)
+      local emax = flr(60*10/self.enemy.spd)
       rectfill(88, 76, 88+bw, 78, 1)
       rectfill(88, 76, 88+bw*mid(0, 1-self.enemy.action_timer/emax, 1), 78, 12)
       rect(88, 76, 88+bw, 78, 5)
     end
   end
 
+  -- battle message
   if self.msg_timer > 0 then
     local w = print(self.battle_msg, 0, -100)
     print(self.battle_msg, 64-w/2, 30, 7)
   end
 
-  if not player_menu.active then
-    -- print("❎ mENU  🅾️ +1g", 2, 120, 6)
-    print("❎ mENU", 2, 120, 6)
-  end
+  -- menu hint
+  if not player_menu.active then print("❎ mENU", 2, 120, 6) end
   player_menu:draw()
 end
 
 function gamescene:pause()
-  -- called when another scene is pushed on top
-  if player_menu.active then
-    player_menu:hide()
-  end
+  if player_menu.active then player_menu:hide() end
 end

@@ -209,7 +209,8 @@ function minescene:exit_mine()
     spd = self.game.player.spd,
     wave = self.game.wave,
     gold_m = gm,
-    gold_e = ge
+    gold_e = ge,
+    miners = self.game.miners
   })
 end
 
