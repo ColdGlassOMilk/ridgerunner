@@ -179,7 +179,7 @@ function titlescene:init()
         end
       },
       draw = function()
-        print('\n\npROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nfETTUCCINI')
+        print('\n\npROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nrOBT.FM')
       end
     }
   }, 'splash')

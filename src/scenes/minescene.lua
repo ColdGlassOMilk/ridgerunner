@@ -180,10 +180,15 @@ function minescene:mine_block()
 
     if was_gold then
       -- found gold! add to player's total
-      local gold_amount = 5 + flr(rnd(6))  -- 5-10 gold per nugget
+      local wave = self.game.wave or 1
+
+      local min_gold = 5 + wave
+      local max_bonus = 5 + wave * 2
+
+      local gold_amount = min_gold + flr(rnd(max_bonus))
+
       self.gold_found += gold_amount
 
-      -- update game scene's gold directly
       if self.game and self.game.gold then
         self.game.gold:add(gold_amount)
       end

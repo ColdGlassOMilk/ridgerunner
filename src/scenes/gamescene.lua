@@ -1,4 +1,9 @@
--- game scene (optimized)
+-- game scene
+
+-- TODO:
+-- Buy Miners - Auto-mining
+-- Prestige system - maybe once you hit level 100?
+
 gamescene = {}
 
 -- helper: create save slot menu item (always enabled)
@@ -73,9 +78,7 @@ function gamescene:init(loaded_data)
 
   -- menus (using helpers to reduce repetition)
   local inv_menu = menu:new({
-    {label='uSE iTEM', action=function() return true end},
-    {label='dROP iTEM', action=function() return true end},
-    {label='eXAMINE', action=function() return true end}
+    {label='eNTER mINE', action=function() scene:switch('mine', self) end}
   })
 
   local shop_menu = menu:new({
@@ -213,7 +216,7 @@ function gamescene:spawn_enemy()
     max_hp = 5 + self.wave*2,
     atk = 1 + flr(self.wave/2),
     spd = 8 + flr(self.wave*0.5),
-    action_timer=0, spr=32
+    action_timer=0, spr=18
   }
   local tx = self.player.x + 16
   local dur = max((self.enemy.x - tx) * (2 - self.wave*0.05), 60)
@@ -318,8 +321,8 @@ end
 function gamescene:draw()
   cls()
   mountains:draw()
-  spr(self.player.spr, self.player.x, self.player.y)
-  if self.enemy then spr(self.enemy.spr, self.enemy.x, self.enemy.y) end
+  spr(self.player.spr, self.player.x, self.player.y, 2, 2)
+  if self.enemy then spr(self.enemy.spr, self.enemy.x, self.enemy.y, 2, 2) end
 
   -- hud
   print("wAVE "..self.wave, 2, 2, 6)
