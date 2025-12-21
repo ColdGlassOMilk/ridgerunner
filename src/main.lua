@@ -3,7 +3,6 @@
 function _init()
   app:init({
     name = "ridgerunner_v1",
-    title = "Ridge Runner v1",
     defaults = {
       -- player stats
       hp = 10,
@@ -13,7 +12,8 @@ function _init()
       spd = 10,
       -- progress
       wave = 1,
-      gold = 0
+      gold_m = 0,
+      gold_e = 0
     },
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free
@@ -28,6 +28,7 @@ function _init()
 
   -- register all scenes
   scene:register('game', gamescene)
+  scene:register('mine', minescene)
   scene:register('title', titlescene)
 
   scene:switch('title')

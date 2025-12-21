@@ -9,14 +9,8 @@ app = {
 
 function app:init(config)
   self.name = config.name or "pico8_boilerplate"
-  self.title = config.title or "Pico-8 Boilerplate"
   self.defaults = config.defaults or {}
   self.flags_defaults = config.flags or {}
-
-  -- set window title
-  if self.title then
-    poke(0x5f36, 1)
-  end
 
   -- extract keys from defaults for slot system
   local keys = {}
