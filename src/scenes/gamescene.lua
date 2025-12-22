@@ -78,7 +78,8 @@ function gamescene:init(loaded_data)
     x = 20, base_x = 20, y = 80, base_y = 80,
     hp = data.hp or 10, max_hp = data.max_hp or 10,
     atk = data.atk or 3, armor = data.armor or 0, spd = data.spd or 10,
-    action_timer = 0, spr = 16
+    action_timer = 0, spr = 16,
+    pick_lvl = data.pick_lvl or 1
   }
   self.enemy = nil
   self:recalc_costs()
@@ -86,7 +87,8 @@ function gamescene:init(loaded_data)
   -- menus
   local inv_menu = menu:new({
     {label='eNTER mINE', action=function() scene:switch('mine', self) end},
-    miner_item(self)
+    miner_item(self),
+    upgrade_item(self, 'pick_lvl', 'pICKAXE', 1)
   })
 
   local shop_menu = menu:new({
@@ -194,9 +196,9 @@ function gamescene:init(loaded_data)
 end
 
 function gamescene:recalc_costs()
-  local base = {atk=10, hp=8, armor=15, spd=12}
-  local defs = {atk=3, max_hp=10, armor=0, spd=10}
-  local per = {atk=1, max_hp=5, armor=1, spd=2}
+  local base = {atk=10, hp=8, armor=15, spd=12, pick_lvl=100}
+  local defs = {atk=3, max_hp=10, armor=0, spd=10, pick_lvl=1}
+  local per = {atk=1, max_hp=5, armor=1, spd=2, pick_lvl=1}
   self.costs = {}
 
   for stat, bc in pairs(base) do
@@ -248,7 +250,7 @@ function gamescene:save_game(n)
   slot:save(n, {
     hp=self.player.hp, max_hp=self.player.max_hp,
     atk=self.player.atk, armor=self.player.armor, spd=self.player.spd,
-    wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners
+    wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners, pick_lvl = self.player.pick_lvl
   })
   self:show_msg("gAME sAVED!")
 end
@@ -260,6 +262,7 @@ function gamescene:load_game(n)
   self.player.hp, self.player.max_hp = d.hp, d.max_hp
   self.player.atk, self.player.armor, self.player.spd = d.atk, d.armor, d.spd
   self.wave, self.miners = d.wave, d.miners or 0
+  self.player.pick_lvl = d.pick_lvl or 1
 
   if d.gold_m then
     self.gold:unpack(d.gold_m, d.gold_e)
@@ -341,7 +344,7 @@ function gamescene:update()
   if self.miners > 0 then
     self.mine_timer += 1
     if self.mine_timer >= 30 then
-      self.gold:add(self.miners)
+      self.gold:add(self.miners * self.player.pick_lvl)
       self.mine_timer = 0
     end
   end

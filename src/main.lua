@@ -14,7 +14,8 @@ function _init()
       wave = 1,
       gold_m = 0,
       gold_e = 0,
-      miners = 0
+      miners = 0,
+      pick_lvl = 1
     },
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free

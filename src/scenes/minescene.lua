@@ -42,7 +42,7 @@ function minescene:init(game_ref)
   self.gold_found = 0
   self.blocks_mined = 0
   self.mine_timer = 0
-  self.miner_gold = 0
+  self.miner_gold = bignum:new(0)
 end
 
 function minescene:generate_mine()
@@ -128,7 +128,8 @@ function minescene:exit_mine()
     wave = self.game.wave,
     gold_m = gm,
     gold_e = ge,
-    miners = self.game.miners
+    miners = self.game.miners,
+    pick_lvl = self.game.player.pick_lvl
   })
 end
 
@@ -139,8 +140,8 @@ function minescene:update()
   if self.game.miners > 0 then
     self.mine_timer += 1
     if self.mine_timer >= 30 then
-      self.game.gold:add(self.game.miners)
-      self.miner_gold += self.game.miners
+      self.game.gold:add(self.game.miners * self.game.player.pick_lvl)
+      self.miner_gold:add(self.game.miners * self.game.player.pick_lvl)
       self.mine_timer = 0
     end
   end
@@ -205,7 +206,7 @@ function minescene:draw()
   spr(1, gx - 10, stat_y - 1)
   print("gOLD mINED: " .. self.gold_found, gx, stat_y, 10)
   spr(5, gx - 10, stat_y + 9)
-  print(self.game.miners .. 'g/sEC (+'..self.miner_gold..')', gx, stat_y + 11, 10)
+  print(self.game.miners * self.game.player.pick_lvl .. 'g/sEC (+'..self.miner_gold:tostr()..')', gx, stat_y + 11, 10)
 
   print("❎ mINE  🅾️ eXIT", 2, 120, 6)
 end
