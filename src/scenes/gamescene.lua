@@ -49,7 +49,7 @@ end
 -- helper: create miner hire menu item
 local function miner_item(gs)
   return {
-    label = function() return 'hIRE mINER ('..gs.costs.miner:tostr()..'g) x'..gs.miners end,
+    label = function() return 'hIRE mINER ('..gs.costs.miner:tostr()..'g)' end,
     enabled = function() return gs.gold:gte(gs.costs.miner) end,
     action = function()
       gs.gold:sub(gs.costs.miner:clone())
@@ -111,6 +111,7 @@ function gamescene:init(loaded_data)
   local save_menu = menu:new({
     {label='sAVE', sub_menu=save_sub},
     {label='lOAD', sub_menu=load_sub},
+    {label='pRESTIGE', enabled=false},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
@@ -356,8 +357,10 @@ function gamescene:draw()
 
   -- hud
   print("wAVE "..self.wave, 2, 2, 6)
-  print("★"..self.gold:tostr(), 2, 10, 10)
-  -- if self.miners > 0 then print("⛏"..self.miners, 2, 18, 9) end
+  spr(4, 1, 9) -- gold
+  print(self.gold:tostr()..' g', 10, 10, 10)
+  spr(5, 1, 17) -- miners
+  print(self.miners, 10, 19, 6)
 
   local function pr(t,y,c) local w=print(t,0,-100) print(t,126-w,y,c) end
   pr("aTK "..self.player.atk, 2, 8)
@@ -399,7 +402,7 @@ function gamescene:draw()
   end
 
   -- menu hint
-  if not player_menu.active then print("❎ mENU", 2, 120, 6) end
+  if not player_menu.active then print("❎", 62, 120, 6) end
   player_menu:draw()
 end
 
