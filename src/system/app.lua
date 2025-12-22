@@ -7,7 +7,7 @@ app = {
 }
 
 function app:init(config)
-  self.name = config.name or "pico8_boilerplate"
+  self.name = config.name
   self.defaults = config.defaults or {}
   self.flags_defaults = config.flags or {}
 
@@ -25,22 +25,6 @@ function app:init(config)
 
   -- initialize slot system
   slot:init(self.name, keys, flags_keys)
-end
-
--- function app:save(slot_num, data)
---   return slot:save(slot_num, data)
--- end
-
--- function app:load(slot_num)
---   return slot:load(slot_num)
--- end
-
-function app:save_options(data)
-  return slot:save_options(data)
-end
-
-function app:load_options()
-  return slot:load_options()
 end
 
 function app:copy_defaults()

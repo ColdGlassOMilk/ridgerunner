@@ -20,37 +20,19 @@ function titlescene:init()
   })
 
   load_menu = menu:new({
-    {label=function()
-      if slot:exists(1) then
-        local data = slot:load(1)
-        return 'sLOT 1 - wAVE ' .. data.wave
-      end
-      return 'sLOT 1 - eMPTY'
-    end, action=function()
+    {label=function() return slot_label(1) end, action=function()
       local data = slot:load(1)
       if data then
         scene:switch('game', data)
       end
     end, enabled=function() return slot:exists(1) end},
-    {label=function()
-      if slot:exists(2) then
-        local data = slot:load(2)
-        return 'sLOT 2 - wAVE ' .. data.wave
-      end
-      return 'sLOT 2 - eMPTY'
-    end, action=function()
+    {label=function() return slot_label(2) end, action=function()
       local data = slot:load(2)
       if data then
         scene:switch('game', data)
       end
     end, enabled=function() return slot:exists(2) end},
-    {label=function()
-      if slot:exists(3) then
-        local data = slot:load(3)
-        return 'sLOT 3 - wAVE ' .. data.wave
-      end
-      return 'sLOT 3 - eMPTY'
-    end, action=function()
+    {label=function() return slot_label(3) end, action=function()
       local data = slot:load(3)
       if data then
         scene:switch('game', data)
@@ -78,7 +60,7 @@ function titlescene:init()
       return 'mUSIC: ' .. (options.music_on and '\#3oN ♪\#7' or '\#5oFF\#7')
     end, action=function()
       options.music_on = not options.music_on
-      app:save_options(options)
+      slot:save_options(options)
       if options.music_on then
         music(0)
       else

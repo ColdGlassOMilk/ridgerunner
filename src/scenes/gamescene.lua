@@ -10,10 +10,7 @@ gamescene = {}
 -- helper: create save slot menu item (always enabled)
 local function save_slot_item(n, action_fn)
   return {
-    label = function()
-      if slot:exists(n) then return 'sLOT '..n..' - wAVE '..slot:load(n).wave end
-      return 'sLOT '..n..' - eMPTY'
-    end,
+    label = function() return slot_label(n) end,
     action = function() action_fn(n) return true end
   }
 end
@@ -21,10 +18,7 @@ end
 -- helper: create load slot menu item (only enabled if slot exists)
 local function load_slot_item(n, action_fn)
   return {
-    label = function()
-      if slot:exists(n) then return 'sLOT '..n..' - wAVE '..slot:load(n).wave end
-      return 'sLOT '..n..' - eMPTY'
-    end,
+    label = function() return slot_label(n) end,
     enabled = function() return slot:exists(n) end,
     action = function() action_fn(n) return true end
   }
