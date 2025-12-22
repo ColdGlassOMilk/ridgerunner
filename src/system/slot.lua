@@ -113,3 +113,62 @@ end
 function slot:reset_options()
   dset(self.flags_addr, 0)
 end
+
+-- helper
+function slot:label(n)
+  if slot:exists(n) then
+    local data = slot:load(n)
+    return 'sLOT '..n..' - wAVE ' .. data.wave
+  end
+  return 'sLOT '..n..' - eMPTY'
+end
+
+-- Menu helpers
+
+-- Create load menu items (loads and switches to game scene)
+function slot:load_menu(opts)
+  opts = opts or {}
+  local items = {}
+  for n = 1, self.slots do
+    add(items, {
+      label = function() return self:label(n) end,
+      enabled = function() return self:exists(n) end,
+      action = function()
+        local data = self:load(n)
+        if data then scene:switch(opts.scene or 'game', data) end
+        return true
+      end
+    })
+  end
+  return items
+end
+
+-- Create save menu items (calls provided save function)
+function slot:save_menu(save_fn)
+  local items = {}
+  for n = 1, self.slots do
+    add(items, {
+      label = function() return self:label(n) end,
+      action = function()
+        if save_fn then save_fn(n) end
+        return true
+      end
+    })
+  end
+  return items
+end
+
+-- Create delete menu items with confirmation
+function slot:delete_menu()
+  local items = {}
+  for n = 1, self.slots do
+    add(items, {
+      label = 'sLOT '..n,
+      enabled = function() return self:exists(n) end,
+      sub_menu = menu:new({
+        {label = 'cONFIRM?', action = function() return self:delete(n) end}
+      })
+    })
+  end
+  return items
+end

@@ -1,14 +1,5 @@
 -- main
 
--- helper
-function slot_label(n)
-  if slot:exists(n) then
-    local data = slot:load(n)
-    return 'sLOT '..n..' - wAVE ' .. data.wave
-  end
-  return 'sLOT '..n..' - eMPTY'
-end
-
 function _init()
   app:init({
     name = "ridgerunner_v1",

@@ -7,23 +7,6 @@
 
 gamescene = {}
 
--- helper: create save slot menu item (always enabled)
-local function save_slot_item(n, action_fn)
-  return {
-    label = function() return slot_label(n) end,
-    action = function() action_fn(n) return true end
-  }
-end
-
--- helper: create load slot menu item (only enabled if slot exists)
-local function load_slot_item(n, action_fn)
-  return {
-    label = function() return slot_label(n) end,
-    enabled = function() return slot:exists(n) end,
-    action = function() action_fn(n) return true end
-  }
-end
-
 -- helper: create upgrade menu item
 local function upgrade_item(gs, stat, label, amt)
   return {
@@ -92,17 +75,8 @@ function gamescene:init(loaded_data)
     upgrade_item(self, 'spd', 'sPD', 2)
   })
 
-  local save_sub = menu:new({
-    save_slot_item(1, function(n) self:save_game(n) end),
-    save_slot_item(2, function(n) self:save_game(n) end),
-    save_slot_item(3, function(n) self:save_game(n) end)
-  })
-
-  local load_sub = menu:new({
-    load_slot_item(1, function(n) self:load_game(n) end),
-    load_slot_item(2, function(n) self:load_game(n) end),
-    load_slot_item(3, function(n) self:load_game(n) end)
-  })
+  local save_sub = menu:new(slot:save_menu(function(n) self:save_game(n) end))
+  local load_sub = menu:new(slot:load_menu())
 
   local save_menu = menu:new({
     {label='sAVE', sub_menu=save_sub},

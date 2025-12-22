@@ -19,37 +19,9 @@ function titlescene:init()
     show_shadow = false
   })
 
-  load_menu = menu:new({
-    {label=function() return slot_label(1) end, action=function()
-      local data = slot:load(1)
-      if data then
-        scene:switch('game', data)
-      end
-    end, enabled=function() return slot:exists(1) end},
-    {label=function() return slot_label(2) end, action=function()
-      local data = slot:load(2)
-      if data then
-        scene:switch('game', data)
-      end
-    end, enabled=function() return slot:exists(2) end},
-    {label=function() return slot_label(3) end, action=function()
-      local data = slot:load(3)
-      if data then
-        scene:switch('game', data)
-      end
-    end, enabled=function() return slot:exists(3) end},
-    {label='dELETE', sub_menu=menu:new({
-      {label='sLOT 1', enabled=function() return slot:exists(1) end, sub_menu=menu:new({
-        {label='cONFIRM?', action=function() return slot:delete(1) end}
-      })},
-      {label='sLOT 2', enabled=function() return slot:exists(2) end, sub_menu=menu:new({
-        {label='cONFIRM?', action=function() return slot:delete(2) end}
-      })},
-      {label='sLOT 3', enabled=function() return slot:exists(3) end, sub_menu=menu:new({
-        {label='cONFIRM?', action=function() return slot:delete(3) end}
-      })},
-    })}
-  }, nil, 75, {
+  local load_items = slot:load_menu()
+  add(load_items, {label='dELETE', sub_menu=menu:new(slot:delete_menu())})
+  load_menu = menu:new(load_items, nil, 75, {
     show_bg = false,
     show_border = false,
     show_shadow = false
