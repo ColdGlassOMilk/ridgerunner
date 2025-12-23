@@ -1,9 +1,9 @@
 -- app manager
 
 app = {
-  name = nil,
-  defaults = {},
-  flags_defaults = {}
+  -- name = nil,
+  -- defaults = {},
+  -- flags_defaults = {}
 }
 
 function app:init(config)

@@ -28,7 +28,7 @@ end
 
 local function upgrade_item(gs, stat, label, amt)
   return {
-    label=function() return label..' +'..amt..' ('..gs.costs[stat]:tostr()..'g)' end,
+    label=function() return label..' +'..amt..' ('..gs.costs[stat]:tostr()..' g)' end,
     enabled=function() return gs.gold:gte(gs.costs[stat]) end,
     action=function()
       gs.gold:sub(gs.costs[stat]:clone())
@@ -43,7 +43,7 @@ end
 
 local function miner_item(gs)
   return {
-    label=function() return 'hIRE mINER ('..gs.costs.miner:tostr()..'g)' end,
+    label=function() return 'hIRE mINER ('..gs.costs.miner:tostr()..' g)' end,
     enabled=function() return gs.gold:gte(gs.costs.miner) end,
     action=function()
       gs.gold:sub(gs.costs.miner:clone())
@@ -304,7 +304,9 @@ function gamescene:draw()
   spr(4, 1, 9)
   print(self.gold:tostr()..' g', 10, 10, 10)
   spr(5, 1, 17)
-  print(self.miners, 10, 19, 6)
+  print(self.miners, 10, 19, 7)
+  spr(11, 1, 27)
+  print('lVL '..self.player.pick_lvl, 10, 28, 7)
 
   local function pr(t,y,c) local w=print(t,0,-100) print(t,126-w,y,c) end
   pr("aTK "..self.player.atk, 2, 8)
@@ -341,9 +343,9 @@ function gamescene:draw()
 
   if self.msg_timer>0 then
     local w = print(self.battle_msg,0,-100)
-    print(self.battle_msg, 64-w/2, 30, 7)
+    print(self.battle_msg, 64-w/2, 50, 7)
   end
 
-  if not player_menu.active then print("❎", 62, 120, 6) end
+  print("❎", 62, 120, 6)
   player_menu:draw()
 end
