@@ -142,7 +142,7 @@ function gamescene:init(loaded_data)
 
     victory = timer_state(
       function()
-        local reward = 5 + gamescene.wave*2
+        local reward = (5 + gamescene.wave*2) * shl(1, gamescene.player.gold_mult)
         gamescene.gold:add(reward)
         gamescene:show_msg("vICTORY! +"..reward.."g")
         gamescene:reset_player()
@@ -219,7 +219,7 @@ function gamescene:save_game(n)
     hp=self.player.hp, max_hp=self.player.max_hp,
     atk=self.player.atk, armor=self.player.armor, spd=self.player.spd,
     wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners, pick_lvl=self.player.pick_lvl,
-    prestige=self.player.prestige
+    prestige=self.player.prestige, gold_mult=self.player.gold_mult
   })
   self:show_msg("gAME sAVED!")
 end
@@ -277,7 +277,7 @@ function gamescene:update()
   if self.miners>0 then
     self.mine_timer+=1
     if self.mine_timer>=30 then
-      self.gold:add(self.miners*self.player.pick_lvl)
+      self.gold:add(self.miners*self.player.pick_lvl*shl(1,self.player.gold_mult))
       self.mine_timer = 0
     end
   end
