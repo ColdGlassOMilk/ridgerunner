@@ -15,7 +15,8 @@ function _init()
       gold_m = 0,
       gold_e = 0,
       miners = 0,
-      pick_lvl = 1
+      pick_lvl = 1,
+      prestige = 0
     },
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free
@@ -31,6 +32,7 @@ function _init()
   -- register all scenes
   scene:register('game', gamescene)
   scene:register('mine', minescene)
+  scene:register('prestige', prestigescene)
   scene:register('title', titlescene)
 
   scene:switch('title')

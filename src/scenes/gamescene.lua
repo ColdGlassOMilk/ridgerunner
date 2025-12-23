@@ -70,14 +70,15 @@ function gamescene:init(loaded_data)
     x=20, base_x=20, y=80, base_y=80,
     hp=data.hp or 10, max_hp=data.max_hp or 10,
     atk=data.atk or 3, armor=data.armor or 0, spd=data.spd or 10,
-    action_timer=0, spr=16, pick_lvl=data.pick_lvl or 1
+    action_timer=0, spr=16, pick_lvl=data.pick_lvl or 1,
+    prestige = data.prestige or 0
   }
   self.enemy = nil
   self:recalc_costs()
 
   -- menus
   local inv_menu = menu:new({
-    {label='eNTER mINE', action=function() scene:switch('mine', self) end},
+    {label='eNTER mINE', action=function() scene:push('mine', self) end},
     miner_item(self),
     upgrade_item(self, 'pick_lvl', 'pICKAXE', 1)
   })
@@ -90,9 +91,9 @@ function gamescene:init(loaded_data)
   })
 
   local save_menu = menu:new({
-    {label='sAVE', sub_menu=menu:new(slot:save_menu(function(n) self:save_game(n) end))},
-    {label='lOAD', sub_menu=menu:new(slot:load_menu())},
-    {label='pRESTIGE', enabled=false},
+    {label='sAVE gAME', sub_menu=menu:new(slot:save_menu(function(n) self:save_game(n) end))},
+    {label='lOAD gAME', sub_menu=menu:new(slot:load_menu())},
+    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige') end, enabled=function() return self.wave > 50 end},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
@@ -216,7 +217,8 @@ function gamescene:save_game(n)
   slot:save(n, {
     hp=self.player.hp, max_hp=self.player.max_hp,
     atk=self.player.atk, armor=self.player.armor, spd=self.player.spd,
-    wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners, pick_lvl=self.player.pick_lvl
+    wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners, pick_lvl=self.player.pick_lvl,
+    prestige=self.player.prestige
   })
   self:show_msg("gAME sAVED!")
 end
@@ -334,8 +336,4 @@ function gamescene:draw()
 
   if not player_menu.active then print("❎", 62, 120, 6) end
   player_menu:draw()
-end
-
-function gamescene:pause()
-  if player_menu.active then player_menu:hide() end
 end

@@ -26,7 +26,7 @@ function minescene:init(game_ref)
     [input.button.up] = function() self:move_cursor(0, -1) end,
     [input.button.down] = function() self:move_cursor(0, 1) end,
     [input.button.x] = function() self:mine_block() end,
-    [input.button.o] = function() self:exit_mine() end
+    [input.button.o] = function() scene:pop() end
   })
 
   self.grid_w = 10
@@ -117,22 +117,6 @@ function minescene:mine_block()
   end
 end
 
-function minescene:exit_mine()
-  local gm, ge = self.game.gold:pack()
-  scene:switch('game', {
-    hp = self.game.player.hp,
-    max_hp = self.game.player.max_hp,
-    atk = self.game.player.atk,
-    armor = self.game.player.armor,
-    spd = self.game.player.spd,
-    wave = self.game.wave,
-    gold_m = gm,
-    gold_e = ge,
-    miners = self.game.miners,
-    pick_lvl = self.game.player.pick_lvl
-  })
-end
-
 function minescene:update()
   self.cursor_bob = sin(time() * 4) * 2
 
@@ -148,7 +132,7 @@ function minescene:update()
 end
 
 function minescene:draw()
-  rectfill(0, 0, 127, 127, 0)
+  cls()
 
   local gx, gy = self.grid_x, self.grid_y
   local gw = self.grid_w * self.block_size
