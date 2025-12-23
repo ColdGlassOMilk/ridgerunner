@@ -54,6 +54,10 @@ local function miner_item(gs)
   }
 end
 
+function gamescene:prestige_lvl_req()
+  return (self.player.prestige + 1) * 50
+end
+
 function gamescene:init(loaded_data)
   tween:clear()
   local data = loaded_data or app:copy_defaults()
@@ -71,8 +75,7 @@ function gamescene:init(loaded_data)
     hp=data.hp or 10, max_hp=data.max_hp or 10,
     atk=data.atk or 3, armor=data.armor or 0, spd=data.spd or 10,
     action_timer=0, spr=16, pick_lvl=data.pick_lvl or 1,
-    prestige = data.prestige or 0,
-    gold_mult = data.gold_mult or 0
+    prestige = data.prestige or 0
   }
   self.enemy = nil
   self:recalc_costs()
@@ -94,7 +97,7 @@ function gamescene:init(loaded_data)
   local save_menu = menu:new({
     {label='sAVE gAME', sub_menu=menu:new(slot:save_menu(function(n) self:save_game(n) end))},
     {label='lOAD gAME', sub_menu=menu:new(slot:load_menu())},
-    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige', self) end, },--enabled=function() return self.wave > 50 end},
+    {label=function() return 'pRESTIGE (wAVE > '..self:prestige_lvl_req()..')' end, action=function() scene:push('prestige', self) end, enabled=function() return self.wave > self:prestige_lvl_req() end},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
@@ -142,7 +145,7 @@ function gamescene:init(loaded_data)
 
     victory = timer_state(
       function()
-        local reward = (5 + gamescene.wave*2) * shl(1, gamescene.player.gold_mult)
+        local reward = (5 + gamescene.wave*2) * shl(1, min(gamescene.player.prestige, 15))
         gamescene.gold:add(reward)
         gamescene:show_msg("vICTORY! +"..reward.."g")
         gamescene:reset_player()
@@ -219,7 +222,7 @@ function gamescene:save_game(n)
     hp=self.player.hp, max_hp=self.player.max_hp,
     atk=self.player.atk, armor=self.player.armor, spd=self.player.spd,
     wave=self.wave, gold_m=gm, gold_e=ge, miners=self.miners, pick_lvl=self.player.pick_lvl,
-    prestige=self.player.prestige, gold_mult=self.player.gold_mult
+    prestige=self.player.prestige
   })
   self:show_msg("gAME sAVED!")
 end
@@ -277,7 +280,7 @@ function gamescene:update()
   if self.miners>0 then
     self.mine_timer+=1
     if self.mine_timer>=30 then
-      self.gold:add(self.miners*self.player.pick_lvl*shl(1,self.player.gold_mult))
+      self.gold:add(self.miners*self.player.pick_lvl*shl(1,min(self.player.prestige,15)))
       self.mine_timer = 0
     end
   end
