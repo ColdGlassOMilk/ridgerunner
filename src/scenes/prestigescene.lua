@@ -14,7 +14,6 @@ function prestigescene:init(game_ref)
 end
 
 function prestigescene:draw()
-  -- cls(1)
-  rectfill(35, 55, 100, 70, 1)
+  cls()
   print('pRESTIGE sCENE', 40, 60, 8)
 end
