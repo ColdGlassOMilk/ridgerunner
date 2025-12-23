@@ -1,9 +1,6 @@
 -- prestige
 
-prestigescene = {
-  draws_underneath = true,    -- scene below still draws
-  updates_underneath = true  -- scene below pauses updating
-}
+prestigescene = {}
 
 function prestigescene:init(game_ref)
   self.game = game_ref
