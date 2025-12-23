@@ -55,7 +55,7 @@ local function miner_item(gs)
 end
 
 function gamescene:prestige_lvl_req()
-  return (self.player.prestige + 1) * 50
+  return 50 + (self.player.prestige * 25)
 end
 
 function gamescene:init(loaded_data)
