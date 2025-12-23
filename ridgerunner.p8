@@ -23,6 +23,7 @@ __lua__
 -- scenes
 #include src/scenes/gamescene.lua
 #include src/scenes/minescene.lua
+#include src/scenes/prestigescene.lua
 #include src/scenes/titlescene.lua
 
 __gfx__

@@ -93,7 +93,7 @@ function gamescene:init(loaded_data)
   local save_menu = menu:new({
     {label='sAVE gAME', sub_menu=menu:new(slot:save_menu(function(n) self:save_game(n) end))},
     {label='lOAD gAME', sub_menu=menu:new(slot:load_menu())},
-    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige') end, enabled=function() return self.wave > 50 end},
+    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige') end, },--enabled=function() return self.wave > 50 end},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
