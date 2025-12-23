@@ -63,9 +63,7 @@ function titlescene:init()
         tween:loop(self, {cont_y = 96}, 30, {ease = tween.ease.in_out_quad})
       end,
       draw = function()
-        local w = print('print ❎ to begin', 0, -100)
-        -- print('press ❎ to begin', 63-w/2, 100, 1)
-        print('press ❎ to begin', 63-w/2, self.cont_y, 2)
+        print('press ❎ to begin', 31, self.cont_y, 2)
       end,
       exit = function()
         tween:clear()
@@ -150,18 +148,18 @@ function titlescene:update()
 end
 
 function titlescene:draw()
-  cls()
-  mountains:draw()
-  -- letters ride the ridgeline
-  local txt="rIDGE rUNNER"
-  local sw=print(txt,0,-100)
-  local sx=64-sw/2
-  for i=1,#txt do
-    local c=sub(txt,i,i)
-    local cx=sx+(i-1)*4
-    local cy=mountains:peak_at(cx)-8
-    print(c,cx,cy+1,0)
-    print(c,cx,cy,7)
-  end
-  self.fsm:draw(self)
+ cls()
+ mountains:draw()
+ local title_lbl="rIDGE rUNNER"
+ sw=print(title_lbl,0,-100)
+ local sx=64-sw/2
+ for i=1,#title_lbl do
+  c=sub(title_lbl,i,i)
+  cx=sx+(i-1)*4
+  cy=mountains:peak_at(cx)-8
+  print(c,cx,cy+1,0)
+  print(c,cx,cy,7)
+ end
+ spr(10,cx+4,mountains:peak_at(cx+4))
+ self.fsm:draw(self)
 end
