@@ -71,7 +71,8 @@ function gamescene:init(loaded_data)
     hp=data.hp or 10, max_hp=data.max_hp or 10,
     atk=data.atk or 3, armor=data.armor or 0, spd=data.spd or 10,
     action_timer=0, spr=16, pick_lvl=data.pick_lvl or 1,
-    prestige = data.prestige or 0
+    prestige = data.prestige or 0,
+    gold_mult = data.gold_mult or 0
   }
   self.enemy = nil
   self:recalc_costs()
@@ -93,7 +94,7 @@ function gamescene:init(loaded_data)
   local save_menu = menu:new({
     {label='sAVE gAME', sub_menu=menu:new(slot:save_menu(function(n) self:save_game(n) end))},
     {label='lOAD gAME', sub_menu=menu:new(slot:load_menu())},
-    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige') end, },--enabled=function() return self.wave > 50 end},
+    {label='pRESTIGE (wAVE >50)', action=function() scene:push('prestige', self) end, },--enabled=function() return self.wave > 50 end},
     {label='qUIT', action=function() scene:switch('title') end}
   })
 
@@ -288,6 +289,12 @@ function gamescene:draw()
 
   spr(self.player.spr, self.player.x, self.player.y, 2, 2)
   if self.enemy then spr(self.enemy.spr, self.enemy.x, self.enemy.y, 2, 2) end
+
+  -- prestige
+  if self.player.prestige > 0 then
+    spr(9, 55, 1)
+    print(self.player.prestige, 66, 3, 6)
+  end
 
   -- hud
   print("wAVE "..self.wave, 2, 2, 6)

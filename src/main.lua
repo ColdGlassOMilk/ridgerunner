@@ -16,7 +16,9 @@ function _init()
       gold_e = 0,
       miners = 0,
       pick_lvl = 1,
-      prestige = 0
+      -- prestige system
+      prestige = 0,
+      gold_mult = 0    -- each point = x2 gold (stacks)
     },
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free
