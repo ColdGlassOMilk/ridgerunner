@@ -37,14 +37,14 @@ function prestigescene:draw()
   end
 
   local function cprint(s,y,c) print(s,64-print(s,0,-100)/2,y,c) end
-  cprint("★ pRESTIGE ★", py+6, 10)
-  cprint("wAVE "..gamescene:prestige_lvl_req().." rEACHED!", py+18, 11)
-  print("rESET pROGRESS FOR:", px+6, py+32, 6)
+  cprint("★ pRESTIGE ★", 36, 10)
+  cprint("wAVE "..gamescene:prestige_lvl_req().." rEACHED!", 45, 11)
+  print("rESET pROGRESS FOR:", 25, 55, 6)
 
   local curr_p = self.game.player.prestige or 0
   local curr_m = shl(1, min(curr_p, 15))
   local new_m = shl(1, min(curr_p+1, 15))
-  cprint("X"..new_m.." gOLD (aLL sOURCES)", py+44, 10)
-  print("cURRENT: ★"..curr_p.." (X"..curr_m.." gOLD)", px+6, py+ph-18, 5)
-  print("❎ cONFIRM  🅾️ bACK", px+6, py+ph-8, 6)
+  cprint("X"..new_m.." gOLD (aLL sOURCES)", 68, 10)
+  print("cURRENT: ★"..curr_p.." (X"..curr_m.." gOLD)", 18, 80, 5)
+  print("❎ cONFIRM  🅾️ bACK", 22, 92, 6)
 end
