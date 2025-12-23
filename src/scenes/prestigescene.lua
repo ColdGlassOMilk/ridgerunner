@@ -1,5 +1,5 @@
 -- prestige scene
-prestigescene = {draws_underneath=true, updates_underneath=false}
+prestigescene = {}
 
 function prestigescene:init(game_ref)
   self.game, self.confirmed, self.anim_t = game_ref, false, 0
@@ -27,14 +27,12 @@ function prestigescene:update() self.anim_t += 0.02 end
 
 function prestigescene:draw()
   cls()
-  local px,py,pw,ph = 14,28,100,72
-  rectfill(px+2,py+2,px+pw+2,py+ph+2,0)
-  rectfill(px,py,px+pw,py+ph,1)
-  rect(px,py,px+pw,py+ph,6)
+  rectfill(16,30,116,102,0)
+  rectfill(14,28,114,100,1)
+  rect(14,28,114,100,6)
 
   if self.confirmed then
-    local msg="pRESTIGING..."
-    print(msg, 64-print(msg,0,-100)/2, 60, 10)
+    print('pRESTIGING...', 64-print('pRESTIGING...',0,-100)/2, 60, 10)
     return
   end
 

@@ -133,7 +133,7 @@ function titlescene:init()
         end
       },
       draw = function()
-        print('\n\npROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nrOBT.FM')
+        print('\n\npROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nrOBT.FM', 20, 60)
       end
     }
   }, 'splash')
@@ -152,7 +152,16 @@ end
 function titlescene:draw()
   cls()
   mountains:draw()
-  local w = print('rIDGE rUNNER', 0, -100)
-  print('rIDGE rUNNER', 63-w/2, 30, 7)
+  -- letters ride the ridgeline
+  local txt="rIDGE rUNNER"
+  local sw=print(txt,0,-100)
+  local sx=64-sw/2
+  for i=1,#txt do
+    local c=sub(txt,i,i)
+    local cx=sx+(i-1)*4
+    local cy=mountains:peak_at(cx)-8
+    print(c,cx,cy+1,0)
+    print(c,cx,cy,7)
+  end
   self.fsm:draw(self)
 end
