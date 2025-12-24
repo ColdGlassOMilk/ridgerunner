@@ -1,16 +1,12 @@
 -- mine scene
--- switch to this scene from gamescene
--- players mine through blocks to find gold
 
 minescene = {}
 
--- block types (sprite IDs, 0 = empty)
 local BLOCK_EMPTY = 0
 local BLOCK_DIRT = 6
 local BLOCK_STONE = 7
 local BLOCK_GOLD = 8
 
--- block hp (hits to mine)
 local BLOCK_HP = {
   [BLOCK_DIRT] = 1,
   [BLOCK_STONE] = 3,
@@ -39,7 +35,7 @@ function minescene:init(game_ref)
 
   self:generate_mine()
 
-  self.gold_found = 0
+  self.gold_found = bignum:new(0)
   self.blocks_mined = 0
   self.mine_timer = 0
   self.miner_gold = bignum:new(0)
@@ -108,8 +104,8 @@ function minescene:mine_block()
 
     if was_gold then
       local wave = self.game.wave or 1
-      local gold_amount = (5 + wave + flr(rnd(5 + wave * 2))) * shl(1, min(self.prestige, 15))
-      self.gold_found += gold_amount
+      local gold_amount = bignum:new(5 + wave + flr(rnd(5 + wave * 2))):mul2(min(self.prestige, 15))
+      self.gold_found:add(gold_amount:clone())
       if self.game and self.game.gold then
         self.game.gold:add(gold_amount)
       end
@@ -121,12 +117,11 @@ end
 function minescene:update()
   self.cursor_bob = sin(time() * 4) * 2
 
-  -- auto-mining: each miner generates 1 gold per second (30 frames)
   if self.game.miners > 0 then
     self.mine_timer += 1
     if self.mine_timer >= 30 then
-      local amt = self.game.miners * self.game.player.pick_lvl * shl(1, min(self.prestige, 15))
-      self.game.gold:add(amt)
+      local amt = bignum:new(self.game.miners * self.game.player.pick_lvl):mul2(min(self.prestige, 15))
+      self.game.gold:add(amt:clone())
       self.miner_gold:add(amt)
       self.mine_timer = 0
     end
@@ -149,10 +144,8 @@ function minescene:draw()
       local py = gy + (y - 1) * self.block_size
 
       if block.type != BLOCK_EMPTY then
-        -- draw sprite
         spr(block.type, px, py)
 
-        -- damage cracks (progressive)
         local dmg = BLOCK_HP[block.type] - block.hp
         if dmg >= 1 then
           pset(px + 2, py + 2, 0)
@@ -163,13 +156,7 @@ function minescene:draw()
           pset(px + 6, py + 6, 0)
           pset(px + 4, py + 4, 0)
         end
-        if dmg >= 3 then
-          pset(px + 3, py + 1, 0)
-          pset(px + 6, py + 2, 0)
-          pset(px + 1, py + 3, 0)
-        end
 
-        -- dim non-mineable blocks
         if not self:is_mineable(x, y) then
           for py2 = py, py + self.block_size - 1, 2 do
             for px2 = px + (py2 % 2), px + self.block_size - 1, 2 do
@@ -181,19 +168,17 @@ function minescene:draw()
     end
   end
 
-  -- cursor
   local cx = gx + (self.cursor.x - 1) * self.block_size
   local cy = gy + (self.cursor.y - 1) * self.block_size + self.cursor_bob
   local cc = self:is_mineable(self.cursor.x, self.cursor.y) and 11 or 8
   rect(cx - 1, cy - 1, cx + self.block_size, cy + self.block_size, cc)
 
-  -- stats
   local stat_y = gy + gh + 8
   spr(1, gx - 10, stat_y - 1)
-  print("gOLD mINED: " .. self.gold_found, gx, stat_y, 10)
-  local gps = self.game.miners * self.game.player.pick_lvl * shl(1, min(self.prestige, 15))
+  print("gOLD mINED: " .. self.gold_found:tostr(), gx, stat_y, 10)
+  local gps = bignum:new(self.game.miners * self.game.player.pick_lvl):mul2(min(self.prestige, 15))
   spr(5, gx - 10, stat_y + 9)
-  print(gps .. '/sEC (+'..self.miner_gold:tostr()..')', gx, stat_y + 11, 10)
+  print(gps:tostr() .. ' g/sEC (+'..self.miner_gold:tostr()..' g)', gx, stat_y + 11, 10)
 
   print("❎ mINE  🅾️ eXIT", 2, 120, 6)
 end

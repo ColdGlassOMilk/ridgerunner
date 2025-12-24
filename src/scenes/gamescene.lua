@@ -145,9 +145,9 @@ function gamescene:init(loaded_data)
 
     victory = timer_state(
       function()
-        local reward = (5 + gamescene.wave*2) * shl(1, min(gamescene.player.prestige, 15))
+        local reward = bignum:new(5 + gamescene.wave*2):mul2(min(gamescene.player.prestige, 15))
         gamescene.gold:add(reward)
-        gamescene:show_msg("vICTORY! +"..reward.."g")
+        gamescene:show_msg("vICTORY! +"..reward:tostr().."g")
         gamescene:reset_player()
       end, 60,
       function() gamescene.wave+=1 gamescene.fsm:switch('walking') end
@@ -280,7 +280,7 @@ function gamescene:update()
   if self.miners>0 then
     self.mine_timer+=1
     if self.mine_timer>=30 then
-      self.gold:add(self.miners*self.player.pick_lvl*shl(1,min(self.player.prestige,15)))
+      self.gold:add(bignum:new(self.miners*self.player.pick_lvl):mul2(min(self.player.prestige,15)))
       self.mine_timer = 0
     end
   end
