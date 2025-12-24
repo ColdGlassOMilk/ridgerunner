@@ -105,7 +105,6 @@ function tween:clear()
   self.active = {}
 end
 
--- add to tween.lua
 function tween:loop(target, props, duration, opts)
   opts = opts or {}
   local start_vals = {}
