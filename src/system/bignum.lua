@@ -47,7 +47,12 @@ function bignum:mul(o)
   return self:norm()
 end
 
-function bignum:mul2(n) for i=1,n do self:mul(2) end return self end
+function bignum:mul2(n)
+  if n<=0 then return self end
+  -- use log math: 2^n = 10^(n*0.30103)
+  local te=n*0.30103 self.e+=flr(te) self.m*=10^(te%1)
+  return self:norm()
+end
 
 function bignum:gte(o)
   if type(o)=="number" then o=bignum:new(o) end

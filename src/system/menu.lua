@@ -36,11 +36,9 @@ end
 
 -- Calculate menu dimensions
 function menu:get_dimensions()
-  local padding = 3
-
   if self.horizontal then
-    local w = #self.items * self.icon_size + (#self.items - 1) * self.spacing + padding * 2
-    local h = self.icon_size + padding * 2
+    local w = #self.items * self.icon_size + (#self.items - 1) * self.spacing + 6
+    local h = self.icon_size + 6
     return w, h
   else
     local font_h = 6
@@ -48,8 +46,8 @@ function menu:get_dimensions()
     for item in all(self.items) do
       w = max(w, print(self:get_label(item), 0, -100))
     end
-    local menu_w = w + padding * 2
-    local menu_h = padding * 2 + font_h * #self.items + self.spacing * (#self.items - 1)
+    local menu_w = w + 6
+    local menu_h = 6 + font_h * #self.items + self.spacing * (#self.items - 1)
     return menu_w, menu_h
   end
 end
