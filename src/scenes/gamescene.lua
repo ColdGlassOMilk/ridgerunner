@@ -189,12 +189,11 @@ function gamescene:recalc_costs()
 end
 
 function gamescene:spawn_enemy()
-  local by = 80
   self.enemy = {
-    x=140, y=by, base_x=self.player.x+16, base_y=by,
+    x=140, y=80, base_x=self.player.x+16, base_y=80,
     hp=5+self.wave*2, max_hp=5+self.wave*2,
     atk=1+flr(self.wave/2), spd=8+flr(self.wave*0.5),
-    action_timer=0, spr=18
+    action_timer=0, spr=({18,20})[flr(rnd(2))+1]
   }
 
   local dur = max((140-self.enemy.base_x)*(2-self.wave*0.05), 60)
@@ -203,7 +202,7 @@ function gamescene:spawn_enemy()
     ease=tween.ease.out_quad,
     on_complete=function() self.fsm:switch('battle') end
   })
-  tween:loop(self.enemy, {y=by-4}, 12, {ease=tween.ease.in_out_quad})
+  tween:loop(self.enemy, {y=76}, 12, {ease=tween.ease.in_out_quad})
 end
 
 function gamescene:reset_player()
