@@ -55,8 +55,6 @@ local function miner_item(gs)
 end
 
 function gamescene:prestige_lvl_req()
-  -- return 50 + (self.player.prestige * 10)
-  -- return 50 + flr(self.player.prestige * 3 + log(self.player.prestige + 1) * 15) -- 50, 63, 75, 86, 96... at p100: ~419
   return 50 + min(self.player.prestige, 10) * 5 + max(0, self.player.prestige - 10) * 3 -- 50, 55, 60... 100 (at p10), then 103, 106... at p100: ~370
 end
 
@@ -147,7 +145,7 @@ function gamescene:init(loaded_data)
 
     victory = timer_state(
       function()
-        local reward = bignum:new(5 + gamescene.wave*2):mul2(min(gamescene.player.prestige, 15))
+        local reward = bignum:new(5 + gamescene.wave*2):mul2(min(gamescene.player.prestige, 100))
         gamescene.gold:add(reward)
         gamescene:show_msg("vICTORY! +"..reward:tostr().."g")
         gamescene:reset_player()
@@ -282,7 +280,7 @@ function gamescene:update()
   if self.miners>0 then
     self.mine_timer+=1
     if self.mine_timer>=30 then
-      self.gold:add(bignum:new(self.miners*self.player.pick_lvl):mul2(min(self.player.prestige,15)))
+      self.gold:add(bignum:new(self.miners*self.player.pick_lvl):mul2(min(self.player.prestige,100)))
       self.mine_timer = 0
     end
   end
