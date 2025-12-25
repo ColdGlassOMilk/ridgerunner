@@ -20,7 +20,7 @@ function titlescene:init()
     show_shadow = false
   })
 
-  local load_items = slot:load_menu()
+  load_items = slot:load_menu()
   add(load_items, {label='dELETE', sub_menu=menu:new(slot:delete_menu())})
   load_menu = menu:new(load_items, nil, 75, {
     show_bg = false,
@@ -132,14 +132,15 @@ function titlescene:init()
         [input.button.o] = function()
           self.fsm:switch('main')
           main_menu.sel = 5
-        end,
-        [input.button.x] = function()
-          self.fsm:switch('main')
-          main_menu.sel = 5
         end
       },
+      init = function()
+        titlescene.credits_y = 128
+        sfx(0, 3)
+        tween:new(titlescene, {credits_y = 80}, 12, {ease = tween.ease.out_back})
+      end,
       draw = function()
-        print('\n\npROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nrOBT.FM', 20, 60)
+        print('pROGRAMMING & dESIGN:\nnICK bRABANT\n\nmUSIC:\nrOBT.FM', 20, titlescene.credits_y)
       end
     }
   }, 'splash')
@@ -158,9 +159,9 @@ end
 function titlescene:draw()
  cls()
  mountains:draw()
- local title_lbl="rIDGE rUNNER"
+ title_lbl="rIDGE rUNNER"
  sw=print(title_lbl,0,-100)
- local sx=64-sw/2
+ sx=64-sw/2
  for i=1,#title_lbl do
   c=sub(title_lbl,i,i)
   cx=sx+(i-1)*4
