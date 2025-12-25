@@ -22,7 +22,7 @@ How far can you run the ridge?
 
 ## Play
 
-You can play Ridge Runner on [itch.io](https://coldglassomilk.itch.io/ridge-runner) the [Lexaloffle BBS](https://www.lexaloffle.com/bbs/) or download the cart and run it in PICO-8.
+You can play Ridge Runner on [itch.io](https://coldglassomilk.itch.io/ridge-runner) the [Lexaloffle BBS](https://www.lexaloffle.com/bbs/?tid=153735) or download the cart and run it in PICO-8.
 
 ## A Personal Milestone
 
