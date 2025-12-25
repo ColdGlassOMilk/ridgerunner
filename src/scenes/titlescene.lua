@@ -1,4 +1,5 @@
 -- title scene
+
 titlescene = {}
 
 function titlescene:init()
@@ -39,8 +40,15 @@ function titlescene:init()
         music(-1, 0)
       end
     end},
+    {label=function()
+      return 'cURSOR: '..(options.cursor and 'cARROT' or 'hAND')
+    end, action=function()
+      options.cursor = not options.cursor
+      slot:save_options(options)
+    end},
     {label='rESET dEFAULTS', action=function()
       if not options.music_on then music(0) end
+      options.cursor = true
       slot:reset_options()
       options = app:copy_flags_defaults()
     end}

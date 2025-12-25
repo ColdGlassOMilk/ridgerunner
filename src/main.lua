@@ -22,7 +22,8 @@ function _init()
     -- boolean flags (all packed into address 60)
     -- up to 16 flags supported, addresses 61-63 free
     flags = {
-      music_on = true
+      music_on = true,
+      cursor = true -- use carrot cursor (true) / hand (false)
     }
   })
 

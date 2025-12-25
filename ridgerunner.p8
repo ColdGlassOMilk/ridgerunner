@@ -3,13 +3,19 @@ version 43
 __lua__
 -- ridge runner
 
+---------------
 -- entry point
+---------------
 #include src/main.lua
 
+----------
 -- common
+----------
 #include src/common/mountains.lua
 
+----------
 -- system
+----------
 #include src/system/app.lua
 #include src/system/bignum.lua
 #include src/system/input.lua
@@ -20,7 +26,9 @@ __lua__
 #include src/system/state.lua
 #include src/system/tween.lua
 
+----------
 -- scenes
+----------
 #include src/scenes/gamescene.lua
 #include src/scenes/minescene.lua
 #include src/scenes/prestigescene.lua

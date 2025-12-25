@@ -141,8 +141,13 @@ function menu:draw()
       local sel, dis = i == self.sel, not self:is_enabled(it)
       print(self:get_label(it), ix + 1, iy + 1, 0)
       print(self:get_label(it), ix, iy, dis and 13 or (sel and 12 or 7))
-      -- if sel and not sub_active then spr(14, dx - 12 + sin(time()*3)*2, iy - 1, 1.5, 1.5) end -- hand
-      if sel and not sub_active then spr(46, dx - 16 + sin(time()*3)*2, iy - 4, 1.9, 1.5) end -- carrot
+      if sel and not sub_active then
+        spr(options.cursor and 46 or 14,
+            dx-(options.cursor and 16 or 12)+sin(time()*3)*2,
+            iy-(options.cursor and 4 or 1),
+            options.cursor and 1.9 or 1.5,
+            1.5)
+      end
     end
     if sub_active then
       local sub, fh = item.sub_menu, 6
